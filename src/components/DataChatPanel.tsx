@@ -18,6 +18,11 @@ interface ChatMessage {
   content: string;
 }
 
+interface ChatResponse {
+  answer?: string;
+  error?: string;
+}
+
 export function DataChatPanel({
   opportunities,
   summaries,
@@ -31,6 +36,7 @@ export function DataChatPanel({
     },
   ]);
   const [draft, setDraft] = useState("");
+  const [isThinking, setIsThinking] = useState(false);
 
   const contextSummary = useMemo(() => {
     const total = summaries.find(
@@ -52,21 +58,78 @@ export function DataChatPanel({
     ].join("\n");
   }, [opportunities.length, summaries]);
 
-  const submit = () => {
+  const opportunityContext = useMemo(
+    () =>
+      opportunities
+        .map((opportunity) => ({
+          revenueType: displayRevenueLevel(opportunity.revenueLevel),
+          subcategory: opportunity.revenueSubcategory,
+          client: opportunity.client,
+          clientGroup: opportunity.clientGroup,
+          opportunityName: opportunity.opportunityName,
+          businessLine: opportunity.platformBusinessLine,
+          status: opportunity.status,
+          probability: opportunity.probability,
+          bidValue: opportunity.bidValue,
+          weightedValue: opportunity.weightedValue,
+          closeDate: opportunity.closeDate,
+          quarter: opportunity.quarter,
+          sourceTab: opportunity.sourceTab,
+        }))
+        .sort((a, b) => b.bidValue - a.bidValue),
+    [opportunities],
+  );
+
+  const submit = async () => {
     const prompt = draft.trim();
-    if (!prompt) return;
+    if (!prompt || isThinking) return;
 
     setMessages((current) => [
       ...current,
       { role: "user", content: prompt },
-      {
-        role: "assistant",
-        content:
-          "AI readout from the current filtered dashboard context:\n\n" +
-          contextSummary,
-      },
     ]);
     setDraft("");
+    setIsThinking(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question: prompt,
+          summary: contextSummary,
+          opportunities: opportunityContext,
+        }),
+      });
+      const body = (await response.json()) as ChatResponse;
+
+      if (!response.ok) {
+        throw new Error(body.error ?? "AI request failed.");
+      }
+
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: body.answer ?? "No AI response returned.",
+        },
+      ]);
+    } catch (error) {
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content:
+            error instanceof Error
+              ? error.message
+              : "The AI request failed. Please try again.",
+        },
+      ]);
+    } finally {
+      setIsThinking(false);
+    }
   };
 
   return (
@@ -105,6 +168,11 @@ export function DataChatPanel({
             {message.content}
           </div>
         ))}
+        {isThinking && (
+          <div className="mr-4 rounded-2xl border border-white/10 bg-bny-navy/55 p-3 text-sm leading-6 text-slate-200">
+            AI is analyzing the filtered revenue context...
+          </div>
+        )}
       </div>
 
       <div className="mt-4 flex gap-2">
@@ -115,12 +183,14 @@ export function DataChatPanel({
             if (event.key === "Enter") submit();
           }}
           placeholder="Ask AI about pipeline, quarters, clients..."
+          disabled={isThinking}
           className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-bny-navy px-4 py-3 text-sm text-white outline-none ring-bny-primary/40 placeholder:text-slate-500 focus:ring-2"
         />
         <button
           type="button"
           onClick={submit}
-          className="rounded-2xl bg-bny-primary px-4 text-white transition hover:bg-bny-teal"
+          disabled={isThinking}
+          className="rounded-2xl bg-bny-primary px-4 text-white transition hover:bg-bny-teal disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Send message"
         >
           <Send className="h-4 w-4" />
