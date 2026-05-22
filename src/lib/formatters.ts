@@ -1,4 +1,4 @@
-import type { NormalizedOpportunity } from "../types/revenue";
+import type { NormalizedOpportunity, RevenueLevel } from "../types/revenue";
 
 export function formatCurrency(value: number) {
   const abs = Math.abs(value);
@@ -22,6 +22,20 @@ export function formatPercent(value: number) {
     style: "percent",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+export function displayRevenueLevel(
+  level: RevenueLevel | "Total Revenue Universe",
+) {
+  const labels: Record<RevenueLevel | "Total Revenue Universe", string> = {
+    "L1 Direct Digital Revenue": "Direct Digital Revenue",
+    "L1 Existing P&I-Other": "Existing P&I-Other",
+    "L2 Digitally Enabled Revenue": "Digitally Enabled Revenue",
+    "L3 Halo Effect Revenue": "Halo Effect Revenue",
+    "Total Revenue Universe": "Total Revenue Universe",
+  };
+
+  return labels[level];
 }
 
 function escapeCsv(value: string | number | boolean | undefined) {
@@ -52,7 +66,7 @@ export function opportunitiesToCsv(rows: NormalizedOpportunity[]) {
 
   const lines = rows.map((row) =>
     [
-      row.revenueLevel,
+      displayRevenueLevel(row.revenueLevel),
       row.revenueSubcategory,
       row.client,
       row.clientGroup,

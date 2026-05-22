@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Activity, LockKeyhole, Search, Sparkles } from "lucide-react";
+import {
+  Activity,
+  MessageSquareText,
+  PanelLeftOpen,
+  Search,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { BusinessLineMix } from "./components/BusinessLineMix";
-import { CaveatsPanel } from "./components/CaveatsPanel";
-import { ClientTreemap } from "./components/ClientTreemap";
+import { DataChatPanel } from "./components/DataChatPanel";
 import { KpiCard } from "./components/KpiCard";
-import { OpportunityScatter } from "./components/OpportunityScatter";
 import { OpportunityTable } from "./components/OpportunityTable";
 import { QuarterTimeline } from "./components/QuarterTimeline";
-import { RevenueConstellation } from "./components/RevenueConstellation";
-import { RevenueWaterfall } from "./components/RevenueWaterfall";
+import { RevenueLevelBars } from "./components/RevenueLevelBars";
 import { UploadPanel } from "./components/UploadPanel";
 import {
   applyFilters,
@@ -24,7 +28,12 @@ import {
   REVENUE_LEVELS,
 } from "./lib/calculations";
 import { detectSourceTab, getSchema, SOURCE_SCHEMAS } from "./lib/csvSchemas";
-import { formatCurrency, formatNumber, formatPercent } from "./lib/formatters";
+import {
+  displayRevenueLevel,
+  formatCurrency,
+  formatNumber,
+  formatPercent,
+} from "./lib/formatters";
 import { normalizeRows } from "./lib/normalizeData";
 import { parseRevenueCsv } from "./lib/parseCsv";
 import { createSyntheticData } from "./lib/syntheticData";
@@ -93,6 +102,8 @@ function App() {
   const [filters, setFilters] = useState<DashboardFilters>(DEFAULT_FILTERS);
   const [notices, setNotices] = useState<string[]>([]);
   const [persistSession, setPersistSession] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
 
   useEffect(() => {
     const enabled = localStorage.getItem(STORAGE_ENABLED_KEY) === "true";
@@ -257,190 +268,253 @@ function App() {
         <div className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-bny-accent/10 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto grid max-w-[1800px] gap-6 px-4 py-6 lg:grid-cols-[380px_minmax(0,1fr)] lg:px-6">
-        <div className="space-y-6 lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:overflow-y-auto">
-          <UploadPanel
-            sourceStates={sourceStates}
-            onFiles={handleFiles}
-            onManualFile={(file, sourceTab) => void loadFileForSource(file, sourceTab)}
-            onReset={resetData}
-            onUseSynthetic={useSyntheticData}
-            persistSession={persistSession}
-            onPersistSessionChange={setPersistSession}
-            notices={notices}
-          />
+      <button
+        type="button"
+        onClick={() => setControlsOpen(true)}
+        className="fixed left-4 top-4 z-40 inline-flex items-center gap-2 rounded-full border border-bny-primary/35 bg-bny-navy/90 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-bny-teal shadow-2xl backdrop-blur transition hover:bg-bny-primary/20 hover:text-white"
+      >
+        <PanelLeftOpen className="h-4 w-4" />
+        Upload / Filters
+      </button>
 
-          <section className="rounded-3xl border border-bny-primary/25 bg-bny-surface/80 p-5 shadow-2xl shadow-black/30 backdrop-blur">
-            <div className="mb-4 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-bny-teal" />
-              <h2 className="text-lg font-semibold text-white">
-                Global Filters
-              </h2>
+      <button
+        type="button"
+        onClick={() => setCopilotOpen(true)}
+        className="fixed right-4 top-4 z-40 inline-flex items-center gap-2 rounded-full border border-bny-primary/35 bg-bny-navy/90 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-bny-teal shadow-2xl backdrop-blur transition hover:bg-bny-primary/20 hover:text-white"
+      >
+        <MessageSquareText className="h-4 w-4" />
+        AI Copilot
+      </button>
+
+      {controlsOpen && (
+        <div className="fixed inset-0 z-50 bg-bny-navy/65 backdrop-blur-sm">
+          <aside className="h-full w-full max-w-[410px] overflow-y-auto border-r border-bny-primary/25 bg-bny-navy p-5 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-bny-teal">
+                  Data controls
+                </p>
+                <h2 className="mt-1 text-xl font-semibold text-white">
+                  Upload and Filters
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setControlsOpen(false)}
+                className="rounded-full border border-white/10 p-2 text-slate-300 transition hover:bg-white/10 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            <div className="grid gap-4">
-              <label className="grid gap-2 text-sm text-slate-300">
-                Reporting year
-                <select
-                  value={filters.year}
-                  onChange={(event) =>
-                    setFilters((current) => ({
-                      ...current,
-                      year: Number(event.target.value),
-                    }))
-                  }
-                  className="rounded-xl border border-white/10 bg-bny-navy px-3 py-2 text-white outline-none ring-bny-primary/40 focus:ring-2"
-                >
-                  {availableYears.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </label>
 
-              <label className="grid gap-2 text-sm text-slate-300">
-                Minimum probability: {filters.minProbability}%
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value={filters.minProbability}
-                  onChange={(event) =>
-                    setFilters((current) => ({
-                      ...current,
-                      minProbability: Number(event.target.value),
-                    }))
-                  }
-                  className="accent-bny-primary"
-                />
-              </label>
+            <div className="space-y-6">
+              <UploadPanel
+                sourceStates={sourceStates}
+                onFiles={handleFiles}
+                onManualFile={(file, sourceTab) =>
+                  void loadFileForSource(file, sourceTab)
+                }
+                onReset={resetData}
+                onUseSynthetic={useSyntheticData}
+                persistSession={persistSession}
+                onPersistSessionChange={setPersistSession}
+                notices={notices}
+              />
 
-              <label className="relative text-sm text-slate-300">
-                <Search className="absolute left-3 top-9 h-4 w-4 text-slate-500" />
-                Client / group search
-                <input
-                  value={filters.search}
-                  onChange={(event) =>
-                    setFilters((current) => ({
-                      ...current,
-                      search: event.target.value,
-                    }))
-                  }
-                  placeholder="Search clients or opportunities"
-                  className="mt-2 w-full rounded-xl border border-white/10 bg-bny-navy py-2 pl-9 pr-3 text-white outline-none ring-bny-primary/40 placeholder:text-slate-500 focus:ring-2"
-                />
-              </label>
-
-              <div className="grid gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  Revenue level
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {REVENUE_LEVELS.map((level) => (
-                    <FilterChip
-                      key={level}
-                      label={level.replace(" Revenue", "")}
-                      checked={filters.levels.includes(level)}
-                      onChange={(checked) =>
-                        setFilters((current) => ({
-                          ...current,
-                          levels: toggleArrayValue(current.levels, level, checked),
-                        }))
-                      }
-                    />
-                  ))}
+              <section className="rounded-3xl border border-bny-primary/25 bg-bny-surface/80 p-5 shadow-2xl shadow-black/30 backdrop-blur">
+                <div className="mb-4 flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-bny-teal" />
+                  <h2 className="text-lg font-semibold text-white">
+                    Global Filters
+                  </h2>
                 </div>
-              </div>
-
-              <div className="grid gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  Status
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {statusOptions.map((status) => (
-                    <FilterChip
-                      key={status}
-                      label={status}
-                      checked={filters.statuses.includes(status)}
-                      onChange={(checked) =>
-                        setFilters((current) => ({
-                          ...current,
-                          statuses: toggleArrayValue(
-                            current.statuses,
-                            status,
-                            checked,
-                          ),
-                        }))
-                      }
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  Business line
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {BUSINESS_LINE_ORDER.map((line) => (
-                    <FilterChip
-                      key={line}
-                      label={line}
-                      checked={filters.businessLines.includes(line)}
-                      onChange={(checked) =>
-                        setFilters((current) => ({
-                          ...current,
-                          businessLines: toggleArrayValue(
-                            current.businessLines,
-                            line,
-                            checked,
-                          ),
-                        }))
-                      }
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid gap-2 text-sm text-slate-300">
-                {[
-                  ["includeLowProbability", "Include low-probability opportunities"],
-                  ["showLostDeals", "Show lost deals"],
-                  [
-                    "showPipelineMatches",
-                    "Show pipeline tracker matches / excluded overlaps",
-                  ],
-                ].map(([key, label]) => (
-                  <label
-                    key={key}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-bny-navy/50 p-3"
-                  >
-                    {label}
-                    <input
-                      type="checkbox"
-                      checked={Boolean(filters[key as keyof DashboardFilters])}
+                <div className="grid gap-4">
+                  <label className="grid gap-2 text-sm text-slate-300">
+                    Reporting year
+                    <select
+                      value={filters.year}
                       onChange={(event) =>
                         setFilters((current) => ({
                           ...current,
-                          [key]: event.target.checked,
+                          year: Number(event.target.value),
                         }))
                       }
-                      className="h-5 w-5 accent-bny-primary"
+                      className="rounded-xl border border-white/10 bg-bny-navy px-3 py-2 text-white outline-none ring-bny-primary/40 focus:ring-2"
+                    >
+                      {availableYears.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="grid gap-2 text-sm text-slate-300">
+                    Minimum probability: {filters.minProbability}%
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="5"
+                      value={filters.minProbability}
+                      onChange={(event) =>
+                        setFilters((current) => ({
+                          ...current,
+                          minProbability: Number(event.target.value),
+                        }))
+                      }
+                      className="accent-bny-primary"
                     />
                   </label>
-                ))}
-              </div>
-            </div>
-          </section>
-        </div>
 
+                  <label className="relative text-sm text-slate-300">
+                    <Search className="absolute left-3 top-9 h-4 w-4 text-slate-500" />
+                    Client / group search
+                    <input
+                      value={filters.search}
+                      onChange={(event) =>
+                        setFilters((current) => ({
+                          ...current,
+                          search: event.target.value,
+                        }))
+                      }
+                      placeholder="Search clients or opportunities"
+                      className="mt-2 w-full rounded-xl border border-white/10 bg-bny-navy py-2 pl-9 pr-3 text-white outline-none ring-bny-primary/40 placeholder:text-slate-500 focus:ring-2"
+                    />
+                  </label>
+
+                  <div className="grid gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Revenue level
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {REVENUE_LEVELS.map((level) => (
+                        <FilterChip
+                          key={level}
+                          label={displayRevenueLevel(level)}
+                          checked={filters.levels.includes(level)}
+                          onChange={(checked) =>
+                            setFilters((current) => ({
+                              ...current,
+                              levels: toggleArrayValue(
+                                current.levels,
+                                level,
+                                checked,
+                              ),
+                            }))
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Status
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {statusOptions.map((status) => (
+                        <FilterChip
+                          key={status}
+                          label={status}
+                          checked={filters.statuses.includes(status)}
+                          onChange={(checked) =>
+                            setFilters((current) => ({
+                              ...current,
+                              statuses: toggleArrayValue(
+                                current.statuses,
+                                status,
+                                checked,
+                              ),
+                            }))
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Business line
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {BUSINESS_LINE_ORDER.map((line) => (
+                        <FilterChip
+                          key={line}
+                          label={line}
+                          checked={filters.businessLines.includes(line)}
+                          onChange={(checked) =>
+                            setFilters((current) => ({
+                              ...current,
+                              businessLines: toggleArrayValue(
+                                current.businessLines,
+                                line,
+                                checked,
+                              ),
+                            }))
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2 text-sm text-slate-300">
+                    {[
+                      [
+                        "includeLowProbability",
+                        "Include low-probability opportunities",
+                      ],
+                      ["showLostDeals", "Show lost deals"],
+                      [
+                        "showPipelineMatches",
+                        "Show pipeline tracker matches / excluded overlaps",
+                      ],
+                    ].map(([key, label]) => (
+                      <label
+                        key={key}
+                        className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-bny-navy/50 p-3"
+                      >
+                        {label}
+                        <input
+                          type="checkbox"
+                          checked={Boolean(filters[key as keyof DashboardFilters])}
+                          onChange={(event) =>
+                            setFilters((current) => ({
+                              ...current,
+                              [key]: event.target.checked,
+                            }))
+                          }
+                          className="h-5 w-5 accent-bny-primary"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {copilotOpen && (
+        <div className="fixed inset-0 z-50 flex items-stretch justify-end bg-bny-navy/65 backdrop-blur-sm">
+          <aside className="h-full w-full max-w-[420px] border-l border-bny-primary/25 shadow-2xl">
+            <DataChatPanel
+              opportunities={filteredOpportunities}
+              summaries={summaries}
+              onClose={() => setCopilotOpen(false)}
+            />
+          </aside>
+        </div>
+      )}
+
+      <div className="relative mx-auto max-w-[1800px] px-4 py-6 pt-20 lg:px-6">
         <div className="space-y-6">
           <section className="relative overflow-hidden rounded-[2rem] border border-bny-primary/30 bg-bny-surface/75 p-6 shadow-2xl shadow-black/30 backdrop-blur md:p-8">
             <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-bny-primary/25 blur-3xl" />
             <div className="absolute -left-24 bottom-0 h-64 w-64 rounded-full bg-bny-accent/10 blur-3xl" />
             <div className="relative flex flex-wrap items-start justify-between gap-8">
-              <div className="max-w-4xl">
+              <div className="max-w-5xl">
                 <img src="/bny-logo.svg" alt="BNY" className="mb-8 h-auto w-44" />
                 <motion.p
                   initial={{ opacity: 0, y: 8 }}
@@ -454,22 +528,10 @@ function App() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 }}
-                  className="mt-5 text-5xl font-semibold tracking-tight text-white md:text-7xl"
+                  className="mt-5 text-5xl font-black tracking-tight text-white md:text-7xl xl:text-8xl"
                 >
-                  P&amp;I Revenue Universe
+                  P&amp;I Master Revenue View
                 </motion.h1>
-                <p className="mt-4 max-w-3xl text-lg leading-8 text-bny-paper/80">
-                  Direct Digital Revenue, Digitally Enabled Revenue, and Halo
-                  Effect Revenue in one executive-ready, local-only view.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-bny-primary/30 bg-bny-navy/60 p-5 text-sm text-bny-paper">
-                <LockKeyhole className="mb-3 h-6 w-6 text-bny-teal" />
-                <p className="font-semibold">No data leaves this browser</p>
-                <p className="mt-1 max-w-xs text-bny-paper/70">
-                  Public shell only. No remote fetches, backend, analytics, API,
-                  database, or server upload.
-                </p>
               </div>
             </div>
 
@@ -504,23 +566,23 @@ function App() {
             </section>
           )}
 
-          <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-            <RevenueWaterfall summaries={summaries} />
-            <RevenueConstellation opportunities={filteredOpportunities} />
-          </div>
-
           <div className="grid gap-6 xl:grid-cols-2">
-            <ClientTreemap opportunities={filteredOpportunities} />
-            <OpportunityScatter opportunities={filteredOpportunities} />
+            <RevenueLevelBars
+              summaries={summaries}
+              opportunities={filteredOpportunities}
+            />
+            <QuarterTimeline
+              data={timeline}
+              opportunities={filteredOpportunities}
+            />
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-            <QuarterTimeline data={timeline} />
-            <BusinessLineMix data={businessLineMix} />
-          </div>
+          <BusinessLineMix
+            data={businessLineMix}
+            opportunities={filteredOpportunities}
+          />
 
-          <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
-            <CaveatsPanel />
+          <div className="grid gap-6">
             <section className="rounded-3xl border border-bny-primary/25 bg-bny-surface/75 p-5 shadow-2xl shadow-black/25 backdrop-blur">
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-bny-teal">
                 Client concentration

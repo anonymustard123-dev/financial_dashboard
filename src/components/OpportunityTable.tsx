@@ -1,6 +1,11 @@
 import { useMemo, useState } from "react";
 import { Download, X } from "lucide-react";
-import { opportunitiesToCsv, formatCurrency } from "../lib/formatters";
+import {
+  displayRevenueLevel,
+  opportunitiesToCsv,
+  formatCurrency,
+} from "../lib/formatters";
+import { toBusinessLineBucket } from "../lib/calculations";
 import type { NormalizedOpportunity } from "../types/revenue";
 
 type SortKey =
@@ -40,9 +45,67 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("bidValue");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selected, setSelected] = useState<NormalizedOpportunity | null>(null);
+  const [tableSearch, setTableSearch] = useState("");
+  const [tableLevel, setTableLevel] = useState("All");
+  const [tableStatus, setTableStatus] = useState("All");
+  const [tableBusinessLine, setTableBusinessLine] = useState("All");
+  const [tableSource, setTableSource] = useState("All");
+  const [tableMinProbability, setTableMinProbability] = useState(0);
+
+  const filterOptions = useMemo(() => {
+    const levels = Array.from(
+      new Set(opportunities.map((row) => row.revenueLevel)),
+    );
+    const statuses = Array.from(
+      new Set(opportunities.map((row) => row.statusBucket)),
+    ).sort();
+    const businessLines = Array.from(
+      new Set(
+        opportunities.map((row) => toBusinessLineBucket(row.platformBusinessLine)),
+      ),
+    ).sort();
+    const sources = Array.from(
+      new Set(opportunities.map((row) => row.sourceTab)),
+    ).sort();
+
+    return { levels, statuses, businessLines, sources };
+  }, [opportunities]);
+
+  const tableFiltered = useMemo(() => {
+    const search = tableSearch.trim().toLowerCase();
+    return opportunities.filter((row) => {
+      if (tableLevel !== "All" && row.revenueLevel !== tableLevel) return false;
+      if (tableStatus !== "All" && row.statusBucket !== tableStatus) return false;
+      if (
+        tableBusinessLine !== "All" &&
+        toBusinessLineBucket(row.platformBusinessLine) !== tableBusinessLine
+      ) {
+        return false;
+      }
+      if (tableSource !== "All" && row.sourceTab !== tableSource) return false;
+      if (row.probability < tableMinProbability) return false;
+      if (
+        search &&
+        !`${row.client} ${row.clientGroup} ${row.opportunityName} ${row.platformBusinessLine}`
+          .toLowerCase()
+          .includes(search)
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [
+    opportunities,
+    tableBusinessLine,
+    tableLevel,
+    tableMinProbability,
+    tableSearch,
+    tableSource,
+    tableStatus,
+  ]);
 
   const sorted = useMemo(() => {
-    return [...opportunities].sort((a, b) => {
+    return [...tableFiltered].sort((a, b) => {
       const aValue = getSortableValue(a, sortKey);
       const bValue = getSortableValue(b, sortKey);
       const result =
@@ -51,7 +114,7 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
           : String(aValue ?? "").localeCompare(String(bValue ?? ""));
       return sortDirection === "asc" ? result : -result;
     });
-  }, [opportunities, sortDirection, sortKey]);
+  }, [sortDirection, sortKey, tableFiltered]);
 
   const handleSort = (key: SortKey) => {
     if (key === sortKey) {
@@ -94,6 +157,110 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
         </button>
       </div>
 
+      <div className="mb-4 grid gap-3 rounded-2xl border border-white/10 bg-bny-navy/45 p-4 md:grid-cols-2 xl:grid-cols-6">
+        <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 xl:col-span-2">
+          Search
+          <input
+            value={tableSearch}
+            onChange={(event) => setTableSearch(event.target.value)}
+            placeholder="Client, group, opportunity..."
+            className="rounded-xl border border-white/10 bg-bny-navy px-3 py-2 text-sm normal-case tracking-normal text-white outline-none ring-bny-primary/40 placeholder:text-slate-500 focus:ring-2"
+          />
+        </label>
+        <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+          Revenue Type
+          <select
+            value={tableLevel}
+            onChange={(event) => setTableLevel(event.target.value)}
+            className="rounded-xl border border-white/10 bg-bny-navy px-3 py-2 text-sm normal-case tracking-normal text-white outline-none ring-bny-primary/40 focus:ring-2"
+          >
+            <option value="All">All</option>
+            {filterOptions.levels.map((level) => (
+              <option key={level} value={level}>
+                {displayRevenueLevel(level)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+          Status
+          <select
+            value={tableStatus}
+            onChange={(event) => setTableStatus(event.target.value)}
+            className="rounded-xl border border-white/10 bg-bny-navy px-3 py-2 text-sm normal-case tracking-normal text-white outline-none ring-bny-primary/40 focus:ring-2"
+          >
+            <option value="All">All</option>
+            {filterOptions.statuses.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+          Business Line
+          <select
+            value={tableBusinessLine}
+            onChange={(event) => setTableBusinessLine(event.target.value)}
+            className="rounded-xl border border-white/10 bg-bny-navy px-3 py-2 text-sm normal-case tracking-normal text-white outline-none ring-bny-primary/40 focus:ring-2"
+          >
+            <option value="All">All</option>
+            {filterOptions.businessLines.map((businessLine) => (
+              <option key={businessLine} value={businessLine}>
+                {businessLine}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+          Source
+          <select
+            value={tableSource}
+            onChange={(event) => setTableSource(event.target.value)}
+            className="rounded-xl border border-white/10 bg-bny-navy px-3 py-2 text-sm normal-case tracking-normal text-white outline-none ring-bny-primary/40 focus:ring-2"
+          >
+            <option value="All">All</option>
+            {filterOptions.sources.map((source) => (
+              <option key={source} value={source}>
+                {source}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 xl:col-span-2">
+          Min Probability: {tableMinProbability}%
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="5"
+            value={tableMinProbability}
+            onChange={(event) => setTableMinProbability(Number(event.target.value))}
+            className="accent-bny-primary"
+          />
+        </label>
+        <div className="flex items-end justify-between gap-3 text-sm text-slate-400 xl:col-span-4">
+          <span>
+            Showing {sorted.length.toLocaleString()} of{" "}
+            {opportunities.length.toLocaleString()} filtered dashboard rows
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setTableSearch("");
+              setTableLevel("All");
+              setTableStatus("All");
+              setTableBusinessLine("All");
+              setTableSource("All");
+              setTableMinProbability(0);
+            }}
+            className="rounded-xl border border-white/10 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
+          >
+            Reset table filters
+          </button>
+        </div>
+      </div>
+
       <div className="max-h-[560px] overflow-auto rounded-2xl border border-white/10">
         <table className="min-w-[1180px] w-full border-collapse text-left text-sm">
           <thead className="sticky top-0 z-10 bg-bny-navy/95 text-xs uppercase tracking-[0.16em] text-slate-400">
@@ -123,7 +290,9 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
                 onClick={() => setSelected(row)}
                 className="cursor-pointer text-slate-200 transition hover:bg-bny-primary/10"
               >
-                <td className="px-4 py-3 text-bny-teal">{row.revenueLevel}</td>
+                <td className="px-4 py-3 text-bny-teal">
+                  {displayRevenueLevel(row.revenueLevel)}
+                </td>
                 <td className="px-4 py-3">{row.revenueSubcategory}</td>
                 <td className="px-4 py-3">
                   <span className="font-medium text-white">{row.client}</span>
@@ -173,7 +342,7 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
             </div>
             <div className="mt-6 grid gap-3">
               {[
-                ["Level", selected.revenueLevel],
+                ["Level", displayRevenueLevel(selected.revenueLevel)],
                 ["Subcategory", selected.revenueSubcategory],
                 ["Client", selected.client],
                 ["Client Group", selected.clientGroup],

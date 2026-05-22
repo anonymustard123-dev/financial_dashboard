@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
-  Area,
-  AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
@@ -9,14 +9,33 @@ import {
   YAxis,
 } from "recharts";
 import { LEVEL_COLORS, REVENUE_LEVELS } from "../lib/calculations";
-import { formatCurrency } from "../lib/formatters";
+import {
+  displayRevenueLevel,
+  formatCurrency,
+} from "../lib/formatters";
+import type { NormalizedOpportunity, RevenueLevel } from "../types/revenue";
+import { OpportunityDrilldownDrawer } from "./OpportunityDrilldownDrawer";
 
 interface QuarterTimelineProps {
   data: Record<string, string | number>[];
+  opportunities: NormalizedOpportunity[];
 }
 
-export function QuarterTimeline({ data }: QuarterTimelineProps) {
+export function QuarterTimeline({ data, opportunities }: QuarterTimelineProps) {
   const [metric, setMetric] = useState<"total" | "weighted">("total");
+  const [selectedSegment, setSelectedSegment] = useState<{
+    quarter: "Q1" | "Q2" | "Q3" | "Q4";
+    level: RevenueLevel;
+  } | null>(null);
+  const selectedRows = selectedSegment
+    ? opportunities
+        .filter(
+          (opportunity) =>
+            opportunity.quarter === selectedSegment.quarter &&
+            opportunity.revenueLevel === selectedSegment.level,
+        )
+        .sort((a, b) => b.bidValue - a.bidValue)
+    : [];
 
   return (
     <section className="rounded-3xl border border-bny-primary/25 bg-bny-surface/75 p-5 shadow-2xl shadow-black/25 backdrop-blur">
@@ -48,22 +67,11 @@ export function QuarterTimeline({ data }: QuarterTimelineProps) {
       </div>
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 16, right: 12, left: 0, bottom: 0 }}>
-            <defs>
-              {REVENUE_LEVELS.map((level) => (
-                <linearGradient
-                  key={level}
-                  id={`gradient-${level.replace(/\W/g, "")}`}
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop offset="5%" stopColor={LEVEL_COLORS[level]} stopOpacity={0.82} />
-                  <stop offset="95%" stopColor={LEVEL_COLORS[level]} stopOpacity={0.18} />
-                </linearGradient>
-              ))}
-            </defs>
+          <BarChart
+            data={data}
+            barGap={0}
+            margin={{ top: 16, right: 12, left: 0, bottom: 0 }}
+          >
             <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
             <XAxis
               dataKey="quarter"
@@ -89,21 +97,45 @@ export function QuarterTimeline({ data }: QuarterTimelineProps) {
             {REVENUE_LEVELS.map((level) => {
               const key = metric === "weighted" ? `${level} Weighted` : level;
               return (
-                <Area
+                <Bar
                   key={key}
-                  type="monotone"
                   dataKey={key}
-                  stackId="1"
-                  stroke={LEVEL_COLORS[level]}
-                  fill={`url(#gradient-${level.replace(/\W/g, "")})`}
-                  strokeWidth={2}
+                  name={displayRevenueLevel(level)}
+                  stackId="quarter"
+                  fill={LEVEL_COLORS[level]}
+                  radius={0}
+                  className="cursor-pointer"
+                  onClick={(entry: { payload?: { quarter?: string } }) => {
+                    const quarter = entry.payload?.quarter;
+                    if (
+                      quarter === "Q1" ||
+                      quarter === "Q2" ||
+                      quarter === "Q3" ||
+                      quarter === "Q4"
+                    ) {
+                      setSelectedSegment({ quarter, level });
+                    }
+                  }}
                   isAnimationActive
                 />
               );
             })}
-          </AreaChart>
+          </BarChart>
         </ResponsiveContainer>
       </div>
+      <p className="mt-3 text-xs text-slate-400">
+        Click a colored segment to inspect the opportunities behind that quarter and revenue type.
+      </p>
+
+      {selectedSegment && (
+        <OpportunityDrilldownDrawer
+          title={`${selectedSegment.quarter} - ${displayRevenueLevel(
+            selectedSegment.level,
+          )}`}
+          opportunities={selectedRows}
+          onClose={() => setSelectedSegment(null)}
+        />
+      )}
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Bar,
   BarChart,
@@ -7,15 +8,38 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { LEVEL_COLORS, REVENUE_LEVELS } from "../lib/calculations";
-import { formatCurrency } from "../lib/formatters";
-import type { BusinessLineSummary } from "../types/revenue";
+import {
+  LEVEL_COLORS,
+  REVENUE_LEVELS,
+  toBusinessLineBucket,
+} from "../lib/calculations";
+import { displayRevenueLevel, formatCurrency } from "../lib/formatters";
+import type {
+  BusinessLineSummary,
+  NormalizedOpportunity,
+  RevenueLevel,
+} from "../types/revenue";
+import { OpportunityDrilldownDrawer } from "./OpportunityDrilldownDrawer";
 
 interface BusinessLineMixProps {
   data: BusinessLineSummary[];
+  opportunities: NormalizedOpportunity[];
 }
 
-export function BusinessLineMix({ data }: BusinessLineMixProps) {
+export function BusinessLineMix({ data, opportunities }: BusinessLineMixProps) {
+  const [selectedSegment, setSelectedSegment] = useState<{
+    businessLine: string;
+    level: RevenueLevel;
+  } | null>(null);
+  const selectedRows = selectedSegment
+    ? opportunities.filter(
+        (row) =>
+          toBusinessLineBucket(row.platformBusinessLine) ===
+            selectedSegment.businessLine &&
+          row.revenueLevel === selectedSegment.level,
+      )
+    : [];
+
   return (
     <section className="rounded-3xl border border-bny-primary/25 bg-bny-surface/75 p-5 shadow-2xl shadow-black/25 backdrop-blur">
       <div className="mb-4">
@@ -31,6 +55,7 @@ export function BusinessLineMix({ data }: BusinessLineMixProps) {
           <BarChart
             layout="vertical"
             data={data}
+            barGap={0}
             margin={{ top: 10, right: 18, left: 44, bottom: 0 }}
           >
             <CartesianGrid stroke="rgba(255,255,255,0.08)" horizontal={false} />
@@ -62,15 +87,33 @@ export function BusinessLineMix({ data }: BusinessLineMixProps) {
               <Bar
                 key={level}
                 dataKey={level}
+                name={displayRevenueLevel(level)}
                 stackId="mix"
                 fill={LEVEL_COLORS[level]}
-                radius={[0, 8, 8, 0]}
+                radius={0}
+                className="cursor-pointer"
+                onClick={(entry: { payload?: { businessLine?: string } }) => {
+                  const businessLine = entry.payload?.businessLine;
+                  if (businessLine) setSelectedSegment({ businessLine, level });
+                }}
                 isAnimationActive
               />
             ))}
           </BarChart>
         </ResponsiveContainer>
       </div>
+      <p className="mt-3 text-xs text-slate-400">
+        Click a colored segment to inspect the opportunities behind that business line and revenue type.
+      </p>
+      {selectedSegment && (
+        <OpportunityDrilldownDrawer
+          title={`${selectedSegment.businessLine} - ${displayRevenueLevel(
+            selectedSegment.level,
+          )}`}
+          opportunities={selectedRows}
+          onClose={() => setSelectedSegment(null)}
+        />
+      )}
     </section>
   );
 }

@@ -8,7 +8,11 @@ import {
   YAxis,
 } from "recharts";
 import type { LevelSummary } from "../types/revenue";
-import { formatCurrency, formatNumber } from "../lib/formatters";
+import {
+  displayRevenueLevel,
+  formatCurrency,
+  formatNumber,
+} from "../lib/formatters";
 
 interface KpiCardProps {
   summary: LevelSummary;
@@ -33,7 +37,7 @@ export function KpiCard({ summary, color }: KpiCardProps) {
       />
       <div className="relative">
         <p className="min-h-10 text-sm font-medium text-slate-300">
-          {summary.level}
+          {displayRevenueLevel(summary.level)}
         </p>
         <p className="mt-3 text-3xl font-semibold tracking-tight text-white">
           {formatCurrency(summary.value)}
