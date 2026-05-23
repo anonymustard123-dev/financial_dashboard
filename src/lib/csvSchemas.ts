@@ -113,6 +113,7 @@ export function detectSourceTab(fileName: string): SourceTab | undefined {
   if (
     normalized.includes("p-i-other") ||
     normalized.includes("p-and-i-other") ||
+    normalized.includes("pandi-other") ||
     normalized.includes("pi-other")
   ) {
     return "L1-P&I-OTHER-DATA";
