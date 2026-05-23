@@ -62,43 +62,15 @@ export const SOURCE_SCHEMAS: SourceSchema[] = [
     sourceTab: "L2-DATA",
     displayName: "L2 Digitally Enabled",
     expectedRows: 100,
-    expectedColumns: 13,
-    requiredColumns: [
-      "Source",
-      "Oppty ID",
-      "Platform/Business Line",
-      "Client",
-      "Client Group",
-      "Opportunity Name",
-      "Status",
-      "Probability",
-      "Total Bid Value (Excluding NII)",
-      "Close Date",
-      "Close Date (Date)",
-      "Pipeline Tracker Match?",
-      "Included?",
-    ],
+    expectedColumns: 11,
+    requiredColumns: L1_ECRM_COLUMNS,
   },
   {
     sourceTab: "L3-DATA",
     displayName: "L3 Halo Effect",
     expectedRows: 8,
-    expectedColumns: 13,
-    requiredColumns: [
-      "Source",
-      "Oppty ID",
-      "Platform/Business Line",
-      "Client",
-      "Client Group",
-      "Opportunity Name",
-      "Status",
-      "Probability",
-      "Total Bid Value (Excluding NII)",
-      "Close Date",
-      "Close Date (Date)",
-      "Pipeline Tracker Match?",
-      "Included?",
-    ],
+    expectedColumns: 11,
+    requiredColumns: L1_ECRM_COLUMNS,
   },
 ];
 
@@ -138,13 +110,27 @@ export function detectSourceTab(fileName: string): SourceTab | undefined {
   if (normalized.includes("stablecoin")) return "L1-Stablecoin-DATA";
   if (normalized.includes("tada")) return "L1-TADA-DATA";
   if (normalized.includes("dac")) return "L1-DAC-DATA";
-  if (normalized.includes("p-i-other") || normalized.includes("pi-other")) {
+  if (
+    normalized.includes("p-i-other") ||
+    normalized.includes("p-and-i-other") ||
+    normalized.includes("pi-other")
+  ) {
     return "L1-P&I-OTHER-DATA";
   }
-  if (normalized === "l2-data" || normalized.includes("l2-data")) {
+  if (
+    normalized === "l2-data" ||
+    normalized.includes("l2-data") ||
+    normalized.startsWith("l2-rev") ||
+    normalized.includes("-l2-rev")
+  ) {
     return "L2-DATA";
   }
-  if (normalized === "l3-data" || normalized.includes("l3-data")) {
+  if (
+    normalized === "l3-data" ||
+    normalized.includes("l3-data") ||
+    normalized.startsWith("l3-rev") ||
+    normalized.includes("-l3-rev")
+  ) {
     return "L3-DATA";
   }
 

@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type DragEvent } from "react";
-import { DatabaseZap, RotateCcw, ShieldCheck, UploadCloud } from "lucide-react";
+import { DatabaseZap, FolderOpen, RotateCcw, ShieldCheck, UploadCloud } from "lucide-react";
 import { SOURCE_SCHEMAS } from "../lib/csvSchemas";
 import type { SourceLoadState, SourceTab } from "../types/revenue";
 
@@ -83,7 +83,26 @@ export function UploadPanel({
           accept=".csv,text/csv"
           multiple
           className="hidden"
-          onChange={(event) => handleFiles(event.target.files)}
+          onChange={(event) => {
+            handleFiles(event.target.files);
+            event.currentTarget.value = "";
+          }}
+        />
+      </label>
+
+      <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-bny-primary/35 bg-bny-primary/15 px-4 py-3 text-sm font-semibold text-bny-teal transition hover:bg-bny-primary/25 hover:text-white">
+        <FolderOpen className="h-4 w-4" />
+        Select export folder
+        <input
+          type="file"
+          // React's input typings do not include Chromium's folder picker attributes.
+          {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
+          multiple
+          className="hidden"
+          onChange={(event) => {
+            handleFiles(event.target.files);
+            event.currentTarget.value = "";
+          }}
         />
       </label>
 

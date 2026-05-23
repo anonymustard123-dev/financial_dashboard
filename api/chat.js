@@ -1,5 +1,6 @@
-const GEMINI_MODEL_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_API_BASE_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models";
 
 function buildPrompt({ question, summary, opportunities }) {
   const rows = Array.isArray(opportunities) ? opportunities : [];
@@ -28,6 +29,7 @@ export default async function handler(request, response) {
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
+  const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
   if (!apiKey) {
     return response.status(500).json({
       error: "GEMINI_API_KEY is not configured in Vercel.",
@@ -45,7 +47,9 @@ export default async function handler(request, response) {
       });
     }
 
-    const geminiResponse = await fetch(`${GEMINI_MODEL_URL}?key=${apiKey}`, {
+    const geminiResponse = await fetch(
+      `${GEMINI_API_BASE_URL}/${model}:generateContent?key=${apiKey}`,
+      {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -61,7 +65,8 @@ export default async function handler(request, response) {
           maxOutputTokens: 1200,
         },
       }),
-    });
+      },
+    );
 
     const geminiBody = await geminiResponse.json();
     if (!geminiResponse.ok) {

@@ -212,7 +212,7 @@ export function normalizeRows(
       closeDate: date ? date.toISOString().slice(0, 10) : "",
       year: date?.getFullYear(),
       quarter: date ? getQuarter(date) : undefined,
-      included: sourceTab === "L2-DATA" || sourceTab === "L3-DATA"
+      included: getValue(row, "Included?")
         ? parseFlag(getValue(row, "Included?"))
         : true,
       pipelineTrackerMatch: parseFlag(getValue(row, "Pipeline Tracker Match?")),

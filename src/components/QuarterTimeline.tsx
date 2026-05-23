@@ -92,6 +92,8 @@ export function QuarterTimeline({ data, opportunities }: QuarterTimelineProps) {
                 borderRadius: 14,
                 color: "#fff",
               }}
+              labelStyle={{ color: "#fff" }}
+              itemStyle={{ color: "#fff" }}
               formatter={(value) => formatCurrency(Number(value))}
             />
             {REVENUE_LEVELS.map((level) => {

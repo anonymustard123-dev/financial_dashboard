@@ -81,6 +81,8 @@ export function BusinessLineMix({ data, opportunities }: BusinessLineMixProps) {
                 borderRadius: 14,
                 color: "#fff",
               }}
+              labelStyle={{ color: "#fff" }}
+              itemStyle={{ color: "#fff" }}
               formatter={(value) => formatCurrency(Number(value))}
             />
             {REVENUE_LEVELS.map((level) => (

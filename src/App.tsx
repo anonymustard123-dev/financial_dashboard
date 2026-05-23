@@ -183,8 +183,10 @@ function App() {
 
   const handleFiles = (files: File[]) => {
     const unmatched: string[] = [];
-    const detected = files.flatMap((file) => {
-      const sourceTab = detectSourceTab(file.name);
+    const csvFiles = files.filter((file) => file.name.toLowerCase().endsWith(".csv"));
+    const skipped = files.length - csvFiles.length;
+    const detected = csvFiles.flatMap((file) => {
+      const sourceTab = detectSourceTab(file.webkitRelativePath || file.name);
       if (!sourceTab) {
         unmatched.push(file.name);
         return [];
@@ -193,10 +195,15 @@ function App() {
     });
 
     setNotices(
-      unmatched.map(
+      [
+        ...(skipped
+          ? [`Ignored ${skipped} non-CSV file${skipped === 1 ? "" : "s"}.`]
+          : []),
+        ...unmatched.map(
         (name) =>
           `${name} was not auto-detected. Use manual mapping to assign it to a source tab.`,
-      ),
+        ),
+      ],
     );
     void Promise.all(
       detected.map(({ file, sourceTab }) => loadFileForSource(file, sourceTab)),

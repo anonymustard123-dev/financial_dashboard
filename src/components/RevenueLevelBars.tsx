@@ -86,6 +86,8 @@ export function RevenueLevelBars({
                 borderRadius: 14,
                 color: "#fff",
               }}
+              labelStyle={{ color: "#fff" }}
+              itemStyle={{ color: "#fff" }}
               formatter={(value, name, payload) => {
                 if (name === "value") return [formatCurrency(Number(value)), "Value"];
                 return [value, payload?.name];
