@@ -38,7 +38,6 @@ export function RevenueLevelBars({
       name: displayRevenueLevel(summary.level as RevenueLevel),
       level: summary.level,
       value: summary.value,
-      weightedValue: summary.weightedValue,
       count: summary.count,
       color: LEVEL_COLORS[summary.level as RevenueLevel],
     }));
@@ -94,10 +93,10 @@ export function RevenueLevelBars({
               }}
               labelFormatter={(_, payload) => {
                 const item = payload?.[0]?.payload as
-                  | { count?: number; weightedValue?: number }
+                  | { count?: number }
                   | undefined;
                 return item
-                  ? `${formatNumber(item.count ?? 0)} opportunities - weighted ${formatCurrency(item.weightedValue ?? 0)}`
+                  ? `${formatNumber(item.count ?? 0)} opportunities`
                   : "";
               }}
             />

@@ -9,7 +9,6 @@ import type {
 
 export const REVENUE_LEVELS: RevenueLevel[] = [
   "L1 Direct Digital Revenue",
-  "L1 Existing P&I-Other",
   "L2 Digitally Enabled Revenue",
   "L3 Halo Effect Revenue",
 ];
@@ -37,7 +36,7 @@ export const BUSINESS_LINE_ORDER = [
 const EMPTY_QUARTERS = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
 
 export const DEFAULT_FILTERS: DashboardFilters = {
-  year: 2026,
+  years: [],
   minProbability: 30,
   includeLowProbability: false,
   showLostDeals: false,
@@ -63,7 +62,12 @@ export function applyFilters(
   const search = filters.search.trim().toLowerCase();
 
   return opportunities.filter((opportunity) => {
-    if (filters.year && opportunity.year !== filters.year) return false;
+    if (
+      filters.years.length > 0 &&
+      (!opportunity.year || !filters.years.includes(opportunity.year))
+    ) {
+      return false;
+    }
     if (!filters.showLostDeals && opportunity.statusBucket === "Lost") {
       return false;
     }
@@ -159,10 +163,6 @@ export function getQuarterTimeline(rows: NormalizedOpportunity[]) {
     for (const level of REVENUE_LEVELS) {
       const levelRows = quarterRows.filter((row) => row.revenueLevel === level);
       item[level] = levelRows.reduce((sum, row) => sum + row.bidValue, 0);
-      item[`${level} Weighted`] = levelRows.reduce(
-        (sum, row) => sum + row.weightedValue,
-        0,
-      );
     }
     return item;
   });

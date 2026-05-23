@@ -353,7 +353,6 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
                 ["Status", selected.status],
                 ["Probability", `${selected.probability}%`],
                 ["Total Bid Value", formatCurrency(selected.bidValue)],
-                ["Weighted Value", formatCurrency(selected.weightedValue)],
                 ["Close Date", selected.closeDate || "N/A"],
                 ["Included", selected.included ? "Yes" : "No"],
                 [

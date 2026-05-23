@@ -71,7 +71,6 @@ export function DataChatPanel({
           status: opportunity.status,
           probability: opportunity.probability,
           bidValue: opportunity.bidValue,
-          weightedValue: opportunity.weightedValue,
           closeDate: opportunity.closeDate,
           quarter: opportunity.quarter,
           sourceTab: opportunity.sourceTab,

@@ -22,7 +22,6 @@ interface QuarterTimelineProps {
 }
 
 export function QuarterTimeline({ data, opportunities }: QuarterTimelineProps) {
-  const [metric, setMetric] = useState<"total" | "weighted">("total");
   const [selectedSegment, setSelectedSegment] = useState<{
     quarter: "Q1" | "Q2" | "Q3" | "Q4";
     level: RevenueLevel;
@@ -39,7 +38,7 @@ export function QuarterTimeline({ data, opportunities }: QuarterTimelineProps) {
 
   return (
     <section className="rounded-3xl border border-bny-primary/25 bg-bny-surface/75 p-5 shadow-2xl shadow-black/25 backdrop-blur">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+      <div className="mb-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-bny-teal">
             Timing
@@ -47,22 +46,6 @@ export function QuarterTimeline({ data, opportunities }: QuarterTimelineProps) {
           <h2 className="mt-2 text-2xl font-semibold text-white">
             Quarter Forecast
           </h2>
-        </div>
-        <div className="rounded-full border border-white/10 bg-bny-navy/60 p-1 text-sm">
-          {(["total", "weighted"] as const).map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setMetric(option)}
-              className={`rounded-full px-3 py-1.5 font-semibold transition ${
-                metric === option
-                  ? "bg-bny-primary text-white"
-                  : "text-slate-300 hover:text-white"
-              }`}
-            >
-              {option === "total" ? "Total" : "Weighted"}
-            </button>
-          ))}
         </div>
       </div>
       <div className="h-80">
@@ -96,32 +79,29 @@ export function QuarterTimeline({ data, opportunities }: QuarterTimelineProps) {
               itemStyle={{ color: "#fff" }}
               formatter={(value) => formatCurrency(Number(value))}
             />
-            {REVENUE_LEVELS.map((level) => {
-              const key = metric === "weighted" ? `${level} Weighted` : level;
-              return (
-                <Bar
-                  key={key}
-                  dataKey={key}
-                  name={displayRevenueLevel(level)}
-                  stackId="quarter"
-                  fill={LEVEL_COLORS[level]}
-                  radius={0}
-                  className="cursor-pointer"
-                  onClick={(entry: { payload?: { quarter?: string } }) => {
-                    const quarter = entry.payload?.quarter;
-                    if (
-                      quarter === "Q1" ||
-                      quarter === "Q2" ||
-                      quarter === "Q3" ||
-                      quarter === "Q4"
-                    ) {
-                      setSelectedSegment({ quarter, level });
-                    }
-                  }}
-                  isAnimationActive
-                />
-              );
-            })}
+            {REVENUE_LEVELS.map((level) => (
+              <Bar
+                key={level}
+                dataKey={level}
+                name={displayRevenueLevel(level)}
+                stackId="quarter"
+                fill={LEVEL_COLORS[level]}
+                radius={0}
+                className="cursor-pointer"
+                onClick={(entry: { payload?: { quarter?: string } }) => {
+                  const quarter = entry.payload?.quarter;
+                  if (
+                    quarter === "Q1" ||
+                    quarter === "Q2" ||
+                    quarter === "Q3" ||
+                    quarter === "Q4"
+                  ) {
+                    setSelectedSegment({ quarter, level });
+                  }
+                }}
+                isAnimationActive
+              />
+            ))}
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -42,18 +42,12 @@ export function KpiCard({ summary, color }: KpiCardProps) {
         <p className="mt-3 text-3xl font-semibold tracking-tight text-white">
           {formatCurrency(summary.value)}
         </p>
-        <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-400">
+        <div className="mt-3 text-xs text-slate-400">
           <span>
             <strong className="block text-sm text-white">
               {formatNumber(summary.count)}
             </strong>
             opportunities
-          </span>
-          <span>
-            <strong className="block text-sm text-white">
-              {formatCurrency(summary.weightedValue)}
-            </strong>
-            weighted
           </span>
         </div>
         <div className="mt-4 h-14">

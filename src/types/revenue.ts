@@ -57,7 +57,7 @@ export interface NormalizedOpportunity {
 }
 
 export interface DashboardFilters {
-  year: number;
+  years: number[];
   minProbability: number;
   includeLowProbability: boolean;
   showLostDeals: boolean;

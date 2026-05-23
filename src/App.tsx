@@ -92,6 +92,15 @@ function toggleArrayValue<T>(values: T[], value: T, checked: boolean) {
   return values.filter((item) => item !== value);
 }
 
+function getDashboardOpportunity(row: NormalizedOpportunity): NormalizedOpportunity {
+  if (row.sourceTab !== "L1-P&I-OTHER-DATA") return row;
+  return {
+    ...row,
+    revenueLevel: "L2 Digitally Enabled Revenue",
+    revenueSubcategory: "Digitally Enabled Revenue",
+  };
+}
+
 function App() {
   const [opportunities, setOpportunities] = useState<NormalizedOpportunity[]>(
     [],
@@ -235,9 +244,13 @@ function App() {
     setNotices(["Synthetic demo data uses clearly fake company names only."]);
   };
 
+  const dashboardOpportunities = useMemo(
+    () => opportunities.map(getDashboardOpportunity),
+    [opportunities],
+  );
   const filteredOpportunities = useMemo(
-    () => applyFilters(opportunities, filters),
-    [filters, opportunities],
+    () => applyFilters(dashboardOpportunities, filters),
+    [dashboardOpportunities, filters],
   );
   const summaries = useMemo(
     () => getLevelSummaries(filteredOpportunities),
@@ -263,7 +276,10 @@ function App() {
     (summary) => summary.level === "Total Revenue Universe",
   );
   const availableYears = Array.from(
-    new Set([2026, ...opportunities.flatMap((row) => (row.year ? [row.year] : []))]),
+    new Set([
+      2026,
+      ...dashboardOpportunities.flatMap((row) => (row.year ? [row.year] : [])),
+    ]),
   ).sort();
   const statusOptions: StatusBucket[] = ["Won", "Open", "Mandated", "Lost", "Other"];
 
@@ -336,25 +352,36 @@ function App() {
                   </h2>
                 </div>
                 <div className="grid gap-4">
-                  <label className="grid gap-2 text-sm text-slate-300">
+                  <div className="grid gap-2 text-sm text-slate-300">
                     Reporting year
-                    <select
-                      value={filters.year}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          year: Number(event.target.value),
-                        }))
-                      }
-                      className="rounded-xl border border-white/10 bg-bny-navy px-3 py-2 text-white outline-none ring-bny-primary/40 focus:ring-2"
-                    >
+                    <div className="flex flex-wrap gap-2">
+                      <FilterChip
+                        label="All years"
+                        checked={filters.years.length === 0}
+                        onChange={(checked) => {
+                          if (!checked) return;
+                          setFilters((current) => ({ ...current, years: [] }));
+                        }}
+                      />
                       {availableYears.map((year) => (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
+                        <FilterChip
+                          key={year}
+                          label={String(year)}
+                          checked={filters.years.includes(year)}
+                          onChange={(checked) =>
+                            setFilters((current) => ({
+                              ...current,
+                              years: toggleArrayValue(
+                                current.years,
+                                year,
+                                checked,
+                              ),
+                            }))
+                          }
+                        />
                       ))}
-                    </select>
-                  </label>
+                    </div>
+                  </div>
 
                   <label className="grid gap-2 text-sm text-slate-300">
                     Minimum probability: {filters.minProbability}%
@@ -542,7 +569,7 @@ function App() {
               </div>
             </div>
 
-            <div className="relative mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="relative mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {summaries.map((summary) => (
                 <KpiCard
                   key={summary.level}
