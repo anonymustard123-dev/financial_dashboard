@@ -1,25 +1,46 @@
 const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_API_BASE_URL =
   "https://generativelanguage.googleapis.com/v1beta/models";
+const MAX_CONTEXT_ROWS = 250;
 
 function buildPrompt({ question, summary, opportunities }) {
-  const rows = Array.isArray(opportunities) ? opportunities : [];
+  const rows = Array.isArray(opportunities)
+    ? opportunities.slice(0, MAX_CONTEXT_ROWS)
+    : [];
 
   return [
     "You are an AI revenue copilot for a BNY-style P&I Master Revenue View dashboard.",
     "Answer the user's question using only the filtered dashboard context below.",
     "Be concise, executive-ready, and specific. If ranking opportunities, use bidValue unless the user asks for weighted value.",
+    "Answer in complete sentences only. Do not end with an unfinished clause or mid-sentence fragment.",
+    "Keep the response to 3-5 sentences unless the user asks for a list.",
     "Format currency in dollars using M/B notation where helpful.",
     "If the context is insufficient, say what is missing.",
     "",
     "Filtered dashboard summary:",
     summary,
     "",
-    "Filtered opportunity rows as JSON:",
+    `Filtered opportunity rows as JSON, limited to the top ${MAX_CONTEXT_ROWS} rows already sorted by bid value:`,
     JSON.stringify(rows),
     "",
     `User question: ${question}`,
   ].join("\n");
+}
+
+function buildGenerationConfig(model) {
+  const config = {
+    temperature: 0.2,
+    topP: 0.9,
+    maxOutputTokens: 4096,
+  };
+
+  if (model.includes("2.5")) {
+    config.thinkingConfig = {
+      thinkingBudget: 0,
+    };
+  }
+
+  return config;
 }
 
 export default async function handler(request, response) {
@@ -47,24 +68,21 @@ export default async function handler(request, response) {
       });
     }
 
+    const prompt = buildPrompt({ question, summary, opportunities });
     const geminiResponse = await fetch(
       `${GEMINI_API_BASE_URL}/${model}:generateContent?key=${apiKey}`,
       {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: buildPrompt({ question, summary, opportunities }) }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.2,
-          topP: 0.9,
-          maxOutputTokens: 1200,
-        },
-      }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: buildGenerationConfig(model),
+        }),
       },
     );
 
@@ -75,8 +93,16 @@ export default async function handler(request, response) {
       });
     }
 
+    const candidate = geminiBody?.candidates?.[0];
+    if (candidate?.finishReason === "MAX_TOKENS") {
+      return response.status(502).json({
+        error:
+          "The AI response hit the model output limit before finishing. Try a narrower filter or a more specific question.",
+      });
+    }
+
     const answer =
-      geminiBody?.candidates?.[0]?.content?.parts
+      candidate?.content?.parts
         ?.map((part) => part.text)
         .filter(Boolean)
         .join("\n")
