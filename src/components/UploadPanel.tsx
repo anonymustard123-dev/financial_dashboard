@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type DragEvent } from "react";
 import { DatabaseZap, FolderOpen, RotateCcw, ShieldCheck, UploadCloud } from "lucide-react";
-import { SOURCE_SCHEMAS } from "../lib/csvSchemas";
+import { SOURCE_LABELS, SOURCE_SCHEMAS } from "../lib/csvSchemas";
 import type { SourceLoadState, SourceTab } from "../types/revenue";
 
 interface UploadPanelProps {
@@ -143,7 +143,7 @@ export function UploadPanel({
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-white">
-                  {state.sourceTab}
+                  {SOURCE_LABELS[state.sourceTab]}
                 </p>
                 <p className="text-xs text-slate-400">
                   {state.fileName ?? "Missing"}

@@ -6,6 +6,7 @@ import {
   formatCurrency,
 } from "../lib/formatters";
 import { toBusinessLineBucket } from "../lib/calculations";
+import { SOURCE_LABELS } from "../lib/csvSchemas";
 import type { NormalizedOpportunity } from "../types/revenue";
 
 type SortKey =
@@ -222,7 +223,7 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
             <option value="All">All</option>
             {filterOptions.sources.map((source) => (
               <option key={source} value={source}>
-                {source}
+                {SOURCE_LABELS[source] ?? source}
               </option>
             ))}
           </select>
@@ -308,7 +309,9 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
                   {formatCurrency(row.bidValue)}
                 </td>
                 <td className="px-4 py-3">{row.closeDate || "N/A"}</td>
-                <td className="px-4 py-3">{row.sourceTab}</td>
+                <td className="px-4 py-3">
+                  {SOURCE_LABELS[row.sourceTab] ?? row.sourceTab}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -357,7 +360,7 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
                   "Pipeline Tracker Match",
                   selected.pipelineTrackerMatch ? "Yes" : "No",
                 ],
-                ["Source Tab", selected.sourceTab],
+                ["Source Tab", SOURCE_LABELS[selected.sourceTab] ?? selected.sourceTab],
               ].map(([label, value]) => (
                 <div
                   key={label}

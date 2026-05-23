@@ -38,7 +38,7 @@ export const SOURCE_SCHEMAS: SourceSchema[] = [
   },
   {
     sourceTab: "L1-P&I-OTHER-DATA",
-    displayName: "Existing P&I-Other",
+    displayName: "P&I Other Pipeline",
     expectedRows: 133,
     expectedColumns: 11,
     requiredColumns: L1_ECRM_COLUMNS,
