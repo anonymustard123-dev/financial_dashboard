@@ -19,6 +19,7 @@ import {
   applyFilters,
   BUSINESS_LINE_ORDER,
   DEFAULT_FILTERS,
+  DEFAULT_REVENUE_LEVEL_FILTER,
   getBusinessLineMix,
   getClientSummaries,
   getLevelSummaries,
@@ -41,6 +42,7 @@ import type {
   DashboardFilters,
   NormalizedOpportunity,
   RevenueLevel,
+  RevenueLevelFilter,
   SourceLoadState,
   SourceTab,
   StatusBucket,
@@ -99,6 +101,13 @@ function getDashboardOpportunity(row: NormalizedOpportunity): NormalizedOpportun
     revenueLevel: "L2 Digitally Enabled Revenue",
     revenueSubcategory: "Digitally Enabled Revenue",
   };
+}
+
+function getRevenueLevelFilter(
+  filters: DashboardFilters,
+  level: RevenueLevel,
+): RevenueLevelFilter {
+  return filters.revenueLevelFilters?.[level] ?? DEFAULT_REVENUE_LEVEL_FILTER;
 }
 
 function App() {
@@ -352,55 +361,6 @@ function App() {
                   </h2>
                 </div>
                 <div className="grid gap-4">
-                  <div className="grid gap-2 text-sm text-slate-300">
-                    Reporting year
-                    <div className="flex flex-wrap gap-2">
-                      <FilterChip
-                        label="All years"
-                        checked={filters.years.length === 0}
-                        onChange={(checked) => {
-                          if (!checked) return;
-                          setFilters((current) => ({ ...current, years: [] }));
-                        }}
-                      />
-                      {availableYears.map((year) => (
-                        <FilterChip
-                          key={year}
-                          label={String(year)}
-                          checked={filters.years.includes(year)}
-                          onChange={(checked) =>
-                            setFilters((current) => ({
-                              ...current,
-                              years: toggleArrayValue(
-                                current.years,
-                                year,
-                                checked,
-                              ),
-                            }))
-                          }
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <label className="grid gap-2 text-sm text-slate-300">
-                    Minimum probability: {filters.minProbability}%
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="5"
-                      value={filters.minProbability}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          minProbability: Number(event.target.value),
-                        }))
-                      }
-                      className="accent-bny-primary"
-                    />
-                  </label>
-
                   <label className="relative text-sm text-slate-300">
                     <Search className="absolute left-3 top-9 h-4 w-4 text-slate-500" />
                     Client / group search
@@ -419,27 +379,124 @@ function App() {
 
                   <div className="grid gap-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      Revenue level
+                      Revenue type configuration
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      {REVENUE_LEVELS.map((level) => (
-                        <FilterChip
-                          key={level}
-                          label={displayRevenueLevel(level)}
-                          checked={filters.levels.includes(level)}
-                          onChange={(checked) =>
-                            setFilters((current) => ({
-                              ...current,
-                              levels: toggleArrayValue(
-                                current.levels,
-                                level,
-                                checked,
-                              ),
-                            }))
-                          }
-                        />
-                      ))}
+                    <div className="grid gap-3">
+                      {REVENUE_LEVELS.map((level) => {
+                        const levelFilter = getRevenueLevelFilter(filters, level);
+                        return (
+                          <div
+                            key={level}
+                            className="rounded-2xl border border-white/10 bg-bny-navy/45 p-3"
+                          >
+                            <div className="mb-3 flex items-center justify-between gap-3">
+                              <p className="text-sm font-semibold text-white">
+                                {displayRevenueLevel(level)}
+                              </p>
+                              <FilterChip
+                                label="Show"
+                                checked={filters.levels.includes(level)}
+                                onChange={(checked) =>
+                                  setFilters((current) => ({
+                                    ...current,
+                                    levels: toggleArrayValue(
+                                      current.levels,
+                                      level,
+                                      checked,
+                                    ),
+                                  }))
+                                }
+                              />
+                            </div>
+                            <label className="grid gap-2 text-sm text-slate-300">
+                              Minimum probability: {levelFilter.minProbability}%
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                step="5"
+                                value={levelFilter.minProbability}
+                                onChange={(event) =>
+                                  setFilters((current) => ({
+                                    ...current,
+                                    revenueLevelFilters: {
+                                      ...current.revenueLevelFilters,
+                                      [level]: {
+                                        ...getRevenueLevelFilter(current, level),
+                                        minProbability: Number(event.target.value),
+                                      },
+                                    },
+                                  }))
+                                }
+                                className="accent-bny-primary"
+                              />
+                            </label>
+                            <div className="mt-3 grid gap-2 text-sm text-slate-300">
+                              Reporting years
+                              <div className="flex flex-wrap gap-2">
+                                <FilterChip
+                                  label="All years"
+                                  checked={levelFilter.years.length === 0}
+                                  onChange={(checked) => {
+                                    if (!checked) return;
+                                    setFilters((current) => ({
+                                      ...current,
+                                      revenueLevelFilters: {
+                                        ...current.revenueLevelFilters,
+                                        [level]: {
+                                          ...getRevenueLevelFilter(current, level),
+                                          years: [],
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                />
+                                {availableYears.map((year) => (
+                                  <FilterChip
+                                    key={`${level}-${year}`}
+                                    label={String(year)}
+                                    checked={levelFilter.years.includes(year)}
+                                    onChange={(checked) =>
+                                      setFilters((current) => ({
+                                        ...current,
+                                        revenueLevelFilters: {
+                                          ...current.revenueLevelFilters,
+                                          [level]: {
+                                            ...getRevenueLevelFilter(current, level),
+                                            years: toggleArrayValue(
+                                              getRevenueLevelFilter(
+                                                current,
+                                                level,
+                                              ).years,
+                                              year,
+                                              checked,
+                                            ),
+                                          },
+                                        },
+                                      }))
+                                    }
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFilters((current) => ({
+                          ...current,
+                          levels: [...DEFAULT_FILTERS.levels],
+                          revenueLevelFilters:
+                            DEFAULT_FILTERS.revenueLevelFilters,
+                        }))
+                      }
+                      className="mt-1 rounded-xl border border-white/10 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
+                    >
+                      Reset revenue type filters
+                    </button>
                   </div>
 
                   <div className="grid gap-2">
@@ -494,10 +551,6 @@ function App() {
 
                   <div className="grid gap-2 text-sm text-slate-300">
                     {[
-                      [
-                        "includeLowProbability",
-                        "Include low-probability opportunities",
-                      ],
                       ["showLostDeals", "Show lost deals"],
                       [
                         "showPipelineMatches",

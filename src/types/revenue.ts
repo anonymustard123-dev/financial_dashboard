@@ -56,10 +56,13 @@ export interface NormalizedOpportunity {
   pipelineTrackerMatch: boolean;
 }
 
-export interface DashboardFilters {
+export interface RevenueLevelFilter {
   years: number[];
   minProbability: number;
-  includeLowProbability: boolean;
+}
+
+export interface DashboardFilters {
+  revenueLevelFilters: Partial<Record<RevenueLevel, RevenueLevelFilter>>;
   showLostDeals: boolean;
   showPipelineMatches: boolean;
   levels: RevenueLevel[];

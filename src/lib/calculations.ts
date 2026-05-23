@@ -5,6 +5,7 @@ import type {
   LevelSummary,
   NormalizedOpportunity,
   RevenueLevel,
+  RevenueLevelFilter,
 } from "../types/revenue";
 
 export const REVENUE_LEVELS: RevenueLevel[] = [
@@ -34,14 +35,18 @@ export const BUSINESS_LINE_ORDER = [
 ];
 
 const EMPTY_QUARTERS = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
+export const DEFAULT_REVENUE_LEVEL_FILTER: RevenueLevelFilter = {
+  years: [],
+  minProbability: 0,
+};
 
 export const DEFAULT_FILTERS: DashboardFilters = {
-  years: [],
-  minProbability: 30,
-  includeLowProbability: false,
+  revenueLevelFilters: Object.fromEntries(
+    REVENUE_LEVELS.map((level) => [level, { ...DEFAULT_REVENUE_LEVEL_FILTER }]),
+  ),
   showLostDeals: false,
   showPipelineMatches: false,
-  levels: [],
+  levels: [...REVENUE_LEVELS],
   statuses: [],
   businessLines: [],
   search: "",
@@ -62,19 +67,20 @@ export function applyFilters(
   const search = filters.search.trim().toLowerCase();
 
   return opportunities.filter((opportunity) => {
+    const levelFilter =
+      filters.revenueLevelFilters?.[opportunity.revenueLevel] ??
+      DEFAULT_REVENUE_LEVEL_FILTER;
+
     if (
-      filters.years.length > 0 &&
-      (!opportunity.year || !filters.years.includes(opportunity.year))
+      levelFilter.years.length > 0 &&
+      (!opportunity.year || !levelFilter.years.includes(opportunity.year))
     ) {
       return false;
     }
     if (!filters.showLostDeals && opportunity.statusBucket === "Lost") {
       return false;
     }
-    if (
-      !filters.includeLowProbability &&
-      opportunity.probability < filters.minProbability
-    ) {
+    if (opportunity.probability < levelFilter.minProbability) {
       return false;
     }
     if (
@@ -86,10 +92,7 @@ export function applyFilters(
     ) {
       return false;
     }
-    if (
-      filters.levels.length > 0 &&
-      !filters.levels.includes(opportunity.revenueLevel)
-    ) {
+    if (!(filters.levels ?? REVENUE_LEVELS).includes(opportunity.revenueLevel)) {
       return false;
     }
     if (
