@@ -107,7 +107,13 @@ function getRevenueLevelFilter(
   filters: DashboardFilters,
   level: RevenueLevel,
 ): RevenueLevelFilter {
-  return filters.revenueLevelFilters?.[level] ?? DEFAULT_REVENUE_LEVEL_FILTER;
+  const stored = filters.revenueLevelFilters?.[level];
+  return {
+    ...DEFAULT_REVENUE_LEVEL_FILTER,
+    ...stored,
+    years: stored?.years ?? DEFAULT_REVENUE_LEVEL_FILTER.years,
+    statuses: stored?.statuses ?? DEFAULT_REVENUE_LEVEL_FILTER.statuses,
+  };
 }
 
 function App() {
@@ -479,6 +485,54 @@ function App() {
                                 ))}
                               </div>
                             </div>
+                            <div className="mt-3 grid gap-2 text-sm text-slate-300">
+                              Statuses
+                              <div className="flex flex-wrap gap-2">
+                                <FilterChip
+                                  label="All statuses"
+                                  checked={levelFilter.statuses.length === 0}
+                                  onChange={(checked) => {
+                                    if (!checked) return;
+                                    setFilters((current) => ({
+                                      ...current,
+                                      revenueLevelFilters: {
+                                        ...current.revenueLevelFilters,
+                                        [level]: {
+                                          ...getRevenueLevelFilter(current, level),
+                                          statuses: [],
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                />
+                                {statusOptions.map((status) => (
+                                  <FilterChip
+                                    key={`${level}-${status}`}
+                                    label={status}
+                                    checked={levelFilter.statuses.includes(status)}
+                                    onChange={(checked) =>
+                                      setFilters((current) => ({
+                                        ...current,
+                                        revenueLevelFilters: {
+                                          ...current.revenueLevelFilters,
+                                          [level]: {
+                                            ...getRevenueLevelFilter(current, level),
+                                            statuses: toggleArrayValue(
+                                              getRevenueLevelFilter(
+                                                current,
+                                                level,
+                                              ).statuses,
+                                              status,
+                                              checked,
+                                            ),
+                                          },
+                                        },
+                                      }))
+                                    }
+                                  />
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         );
                       })}
@@ -497,31 +551,6 @@ function App() {
                     >
                       Reset revenue type filters
                     </button>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      Status
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {statusOptions.map((status) => (
-                        <FilterChip
-                          key={status}
-                          label={status}
-                          checked={filters.statuses.includes(status)}
-                          onChange={(checked) =>
-                            setFilters((current) => ({
-                              ...current,
-                              statuses: toggleArrayValue(
-                                current.statuses,
-                                status,
-                                checked,
-                              ),
-                            }))
-                          }
-                        />
-                      ))}
-                    </div>
                   </div>
 
                   <div className="grid gap-2">
@@ -551,7 +580,6 @@ function App() {
 
                   <div className="grid gap-2 text-sm text-slate-300">
                     {[
-                      ["showLostDeals", "Show lost deals"],
                       [
                         "showPipelineMatches",
                         "Show pipeline tracker matches / excluded overlaps",

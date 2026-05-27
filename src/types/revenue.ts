@@ -59,14 +59,13 @@ export interface NormalizedOpportunity {
 export interface RevenueLevelFilter {
   years: number[];
   minProbability: number;
+  statuses: StatusBucket[];
 }
 
 export interface DashboardFilters {
   revenueLevelFilters: Partial<Record<RevenueLevel, RevenueLevelFilter>>;
-  showLostDeals: boolean;
   showPipelineMatches: boolean;
   levels: RevenueLevel[];
-  statuses: StatusBucket[];
   businessLines: string[];
   search: string;
 }

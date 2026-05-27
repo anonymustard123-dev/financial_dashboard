@@ -16,6 +16,9 @@ function buildPrompt({ question, summary, opportunities }) {
     "Keep the response to 3-5 sentences unless the user asks for a list.",
     "Format currency in dollars using M/B notation where helpful.",
     "If the context is insufficient, say what is missing.",
+    "Return only valid JSON with this shape: {\"answer\":\"...\",\"csvAttachment\":null}.",
+    "When the user asks for a list, ranking, table, top deals, specific output, or exportable result, set csvAttachment to {\"filename\":\"descriptive-name.csv\",\"content\":\"csv text\"}. Otherwise set csvAttachment to null.",
+    "CSV attachments should use clear headers and include only rows needed to answer the question.",
     "",
     "Filtered dashboard summary:",
     summary,
@@ -32,6 +35,7 @@ function buildGenerationConfig(model) {
     temperature: 0.2,
     topP: 0.9,
     maxOutputTokens: 4096,
+    responseMimeType: "application/json",
   };
 
   if (model.includes("2.5")) {
@@ -41,6 +45,39 @@ function buildGenerationConfig(model) {
   }
 
   return config;
+}
+
+function parseJsonResponse(text) {
+  const trimmed = String(text ?? "").trim();
+  const withoutFence = trimmed
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
+  try {
+    return JSON.parse(withoutFence);
+  } catch {
+    return { answer: trimmed || "No AI response returned.", csvAttachment: null };
+  }
+}
+
+function normalizeCsvAttachment(attachment) {
+  if (!attachment || typeof attachment !== "object") return null;
+  const filename =
+    typeof attachment.filename === "string" && attachment.filename.trim()
+      ? attachment.filename.trim()
+      : "dashboard-output.csv";
+  const content =
+    typeof attachment.content === "string" ? attachment.content.trim() : "";
+
+  if (!content) return null;
+
+  return {
+    filename: filename.toLowerCase().endsWith(".csv")
+      ? filename
+      : `${filename}.csv`,
+    content,
+  };
 }
 
 export default async function handler(request, response) {
@@ -101,14 +138,20 @@ export default async function handler(request, response) {
       });
     }
 
-    const answer =
+    const responseText =
       candidate?.content?.parts
         ?.map((part) => part.text)
         .filter(Boolean)
         .join("\n")
-        .trim() || "No AI response returned.";
+        .trim() || "";
+    const parsedResponse = parseJsonResponse(responseText);
+    const answer =
+      typeof parsedResponse.answer === "string" && parsedResponse.answer.trim()
+        ? parsedResponse.answer.trim()
+        : responseText || "No AI response returned.";
+    const csvAttachment = normalizeCsvAttachment(parsedResponse.csvAttachment);
 
-    return response.status(200).json({ answer });
+    return response.status(200).json({ answer, csvAttachment });
   } catch (error) {
     return response.status(500).json({
       error:

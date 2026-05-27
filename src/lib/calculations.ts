@@ -38,16 +38,25 @@ const EMPTY_QUARTERS = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
 export const DEFAULT_REVENUE_LEVEL_FILTER: RevenueLevelFilter = {
   years: [],
   minProbability: 0,
+  statuses: [],
+};
+const DIRECT_DIGITAL_DEFAULT_FILTER: RevenueLevelFilter = {
+  years: [],
+  minProbability: 30,
+  statuses: ["Won", "Open"],
 };
 
 export const DEFAULT_FILTERS: DashboardFilters = {
   revenueLevelFilters: Object.fromEntries(
-    REVENUE_LEVELS.map((level) => [level, { ...DEFAULT_REVENUE_LEVEL_FILTER }]),
+    REVENUE_LEVELS.map((level) => [
+      level,
+      level === "L1 Direct Digital Revenue"
+        ? { ...DIRECT_DIGITAL_DEFAULT_FILTER }
+        : { ...DEFAULT_REVENUE_LEVEL_FILTER },
+    ]),
   ),
-  showLostDeals: false,
   showPipelineMatches: false,
   levels: [...REVENUE_LEVELS],
-  statuses: [],
   businessLines: [],
   search: "",
 };
@@ -70,17 +79,24 @@ export function applyFilters(
     const levelFilter =
       filters.revenueLevelFilters?.[opportunity.revenueLevel] ??
       DEFAULT_REVENUE_LEVEL_FILTER;
+    const selectedYears = levelFilter.years ?? [];
+    const selectedStatuses = levelFilter.statuses ?? [];
+    const minProbability =
+      levelFilter.minProbability ?? DEFAULT_REVENUE_LEVEL_FILTER.minProbability;
 
     if (
-      levelFilter.years.length > 0 &&
-      (!opportunity.year || !levelFilter.years.includes(opportunity.year))
+      selectedYears.length > 0 &&
+      (!opportunity.year || !selectedYears.includes(opportunity.year))
     ) {
       return false;
     }
-    if (!filters.showLostDeals && opportunity.statusBucket === "Lost") {
+    if (opportunity.probability < minProbability) {
       return false;
     }
-    if (opportunity.probability < levelFilter.minProbability) {
+    if (
+      selectedStatuses.length > 0 &&
+      !selectedStatuses.includes(opportunity.statusBucket)
+    ) {
       return false;
     }
     if (
@@ -93,12 +109,6 @@ export function applyFilters(
       return false;
     }
     if (!(filters.levels ?? REVENUE_LEVELS).includes(opportunity.revenueLevel)) {
-      return false;
-    }
-    if (
-      filters.statuses.length > 0 &&
-      !filters.statuses.includes(opportunity.statusBucket)
-    ) {
       return false;
     }
     if (
