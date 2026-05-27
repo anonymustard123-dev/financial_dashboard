@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Download, MessageSquareText, Send, X } from "lucide-react";
+import { MessageSquareText, Send, X } from "lucide-react";
 import {
   displayRevenueLevel,
   formatCurrency,
@@ -13,33 +13,53 @@ interface DataChatPanelProps {
   onClose: () => void;
 }
 
+interface ChatTable {
+  columns: string[];
+  rows: string[][];
+}
+
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
-  csvAttachment?: ChatCsvAttachment | null;
-}
-
-interface ChatCsvAttachment {
-  filename: string;
-  content: string;
+  table?: ChatTable | null;
 }
 
 interface ChatResponse {
   answer?: string;
-  csvAttachment?: ChatCsvAttachment | null;
+  table?: ChatTable | null;
   error?: string;
 }
 
-function downloadCsvAttachment(attachment: ChatCsvAttachment) {
-  const blob = new Blob([attachment.content], {
-    type: "text/csv;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = attachment.filename;
-  link.click();
-  URL.revokeObjectURL(url);
+function ChatTableView({ table }: { table: ChatTable }) {
+  return (
+    <div className="mt-3 overflow-x-auto rounded-xl border border-white/10">
+      <table className="min-w-full border-collapse text-left text-xs">
+        <thead className="bg-bny-surface/90 text-[10px] uppercase tracking-[0.14em] text-slate-400">
+          <tr>
+            {table.columns.map((column) => (
+              <th key={column} className="whitespace-nowrap px-3 py-2 font-semibold">
+                {column}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/10">
+          {table.rows.map((row, rowIndex) => (
+            <tr key={`row-${rowIndex}`} className="text-slate-200">
+              {row.map((cell, cellIndex) => (
+                <td
+                  key={`${rowIndex}-${cellIndex}`}
+                  className="whitespace-nowrap px-3 py-2 align-top"
+                >
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export function DataChatPanel({
@@ -132,7 +152,7 @@ export function DataChatPanel({
         {
           role: "assistant",
           content: body.answer ?? "No AI response returned.",
-          csvAttachment: body.csvAttachment ?? null,
+          table: body.table ?? null,
         },
       ]);
     } catch (error) {
@@ -185,16 +205,7 @@ export function DataChatPanel({
             }`}
           >
             <p className="whitespace-pre-line">{message.content}</p>
-            {message.csvAttachment && (
-              <button
-                type="button"
-                onClick={() => downloadCsvAttachment(message.csvAttachment!)}
-                className="mt-3 inline-flex items-center gap-2 rounded-xl border border-bny-primary/35 bg-bny-primary/15 px-3 py-2 text-xs font-semibold text-bny-teal transition hover:bg-bny-primary/25 hover:text-white"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Download CSV
-              </button>
-            )}
+            {message.table && <ChatTableView table={message.table} />}
           </div>
         ))}
         {isThinking && (
