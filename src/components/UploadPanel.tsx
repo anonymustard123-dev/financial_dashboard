@@ -74,7 +74,7 @@ export function UploadPanel({
         }`}
       >
         <UploadCloud className="mb-3 h-8 w-8 text-bny-teal" />
-        <span className="font-medium text-white">Drop all 7 CSVs here</span>
+        <span className="font-medium text-white">Drop all 6 CSVs here</span>
         <span className="mt-1 text-sm text-slate-300">
           Filename detection loads matched tabs instantly.
         </span>

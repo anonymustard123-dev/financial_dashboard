@@ -1,6 +1,5 @@
 export type RevenueLevel =
   | "L1 Direct Digital Revenue"
-  | "L1 Existing P&I-Other"
   | "Traditional Opportunities Expansion"
   | "Digital-Native Client Expansion";
 
@@ -8,7 +7,6 @@ export type SourceTab =
   | "L1-DAC-DATA"
   | "L1-Stablecoin-DATA"
   | "L1-TADA-DATA"
-  | "L1-P&I-OTHER-DATA"
   | "L1-HARD-CODED-DATA"
   | "Bucket B Revenue Data"
   | "Bucket C Revenue Data";

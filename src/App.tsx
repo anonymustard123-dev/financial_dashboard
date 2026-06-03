@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type PointerEvent } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -94,15 +94,6 @@ function toggleArrayValue<T>(values: T[], value: T, checked: boolean) {
   return values.filter((item) => item !== value);
 }
 
-function getDashboardOpportunity(row: NormalizedOpportunity): NormalizedOpportunity {
-  if (row.sourceTab !== "L1-P&I-OTHER-DATA") return row;
-  return {
-    ...row,
-    revenueLevel: "Traditional Opportunities Expansion",
-    revenueSubcategory: "Traditional Opportunities Expansion",
-  };
-}
-
 function getRevenueLevelFilter(
   filters: DashboardFilters,
   level: RevenueLevel,
@@ -128,6 +119,7 @@ function App() {
   const [persistSession, setPersistSession] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
+  const [copilotWidth, setCopilotWidth] = useState(520);
 
   useEffect(() => {
     const enabled = localStorage.getItem(STORAGE_ENABLED_KEY) === "true";
@@ -241,6 +233,25 @@ function App() {
     localStorage.removeItem(STORAGE_DATA_KEY);
   };
 
+  const startCopilotResize = (event: PointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = copilotWidth;
+    const minWidth = 420;
+    const maxWidth = Math.max(minWidth, window.innerWidth - 32);
+
+    const handlePointerMove = (moveEvent: globalThis.PointerEvent) => {
+      const nextWidth = startWidth + startX - moveEvent.clientX;
+      setCopilotWidth(Math.min(maxWidth, Math.max(minWidth, nextWidth)));
+    };
+    const stopResize = () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopResize, { once: true });
+  };
+
   const useSyntheticData = () => {
     const synthetic = createSyntheticData();
     setOpportunities(synthetic);
@@ -259,10 +270,7 @@ function App() {
     setNotices(["Synthetic demo data uses clearly fake company names only."]);
   };
 
-  const dashboardOpportunities = useMemo(
-    () => opportunities.map(getDashboardOpportunity),
-    [opportunities],
-  );
+  const dashboardOpportunities = opportunities;
   const filteredOpportunities = useMemo(
     () => applyFilters(dashboardOpportunities, filters),
     [dashboardOpportunities, filters],
@@ -613,7 +621,16 @@ function App() {
 
       {copilotOpen && (
         <div className="fixed inset-0 z-50 flex items-stretch justify-end bg-bny-navy/65 backdrop-blur-sm">
-          <aside className="h-full w-full max-w-[420px] border-l border-bny-primary/25 shadow-2xl">
+          <aside
+            className="relative h-full border-l border-bny-primary/25 shadow-2xl"
+            style={{ width: copilotWidth, maxWidth: "calc(100vw - 2rem)" }}
+          >
+            <button
+              type="button"
+              onPointerDown={startCopilotResize}
+              className="absolute -left-1 top-0 z-10 h-full w-2 cursor-col-resize border-l border-bny-primary/30 bg-bny-primary/10 opacity-70 transition hover:bg-bny-primary/30"
+              aria-label="Resize AI Revenue Copilot"
+            />
             <DataChatPanel
               opportunities={filteredOpportunities}
               summaries={summaries}
@@ -675,7 +692,7 @@ function App() {
               </h2>
               <p className="mx-auto mt-3 max-w-2xl text-slate-300">
                 The deployed app contains no real model data. During a meeting,
-                drag in the seven CSV exports or use the synthetic demo mode for
+                drag in the six CSV exports or use the synthetic demo mode for
                 a polished placeholder view with fake company names.
               </p>
             </section>

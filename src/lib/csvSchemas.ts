@@ -49,13 +49,6 @@ export const SOURCE_SCHEMAS: SourceSchema[] = [
     requiredColumns: L1_ECRM_COLUMNS,
   },
   {
-    sourceTab: "L1-P&I-OTHER-DATA",
-    displayName: "P&I Other Pipeline",
-    expectedRows: 133,
-    expectedColumns: 11,
-    requiredColumns: L1_ECRM_COLUMNS,
-  },
-  {
     sourceTab: "L1-HARD-CODED-DATA",
     displayName: "L1 Hard-coded",
     expectedRows: 1,
@@ -124,14 +117,6 @@ export function detectSourceTab(fileName: string): SourceTab | undefined {
   if (normalized.includes("stablecoin")) return "L1-Stablecoin-DATA";
   if (normalized.includes("tada")) return "L1-TADA-DATA";
   if (normalized.includes("dac")) return "L1-DAC-DATA";
-  if (
-    normalized.includes("p-i-other") ||
-    normalized.includes("p-and-i-other") ||
-    normalized.includes("pandi-other") ||
-    normalized.includes("pi-other")
-  ) {
-    return "L1-P&I-OTHER-DATA";
-  }
   if (
     normalized === "bucket-b-revenue-data" ||
     normalized.includes("bucket-b-revenue-data") ||

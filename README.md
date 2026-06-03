@@ -31,7 +31,7 @@ The deployment contains only the React shell and synthetic placeholder generator
 
 ## Presentation Workflow
 
-1. Export the seven model tabs as CSV files.
+1. Export the six model tabs as CSV files.
 2. Open the deployed dashboard.
 3. Drag all CSV files into the "Local-only upload" panel, or upload one file at a time with manual mapping.
 4. Use filters for year, probability threshold, status, revenue level, business line, and client search.
@@ -61,10 +61,6 @@ Uploaded data is parsed and calculated locally in the browser session. Data is n
 Uses the same 11 required columns as `L1-DAC-DATA.csv`.
 
 ### L1-TADA-DATA.csv
-
-Uses the same 11 required columns as `L1-DAC-DATA.csv`.
-
-### L1-P&I-OTHER-DATA.csv
 
 Uses the same 11 required columns as `L1-DAC-DATA.csv`.
 

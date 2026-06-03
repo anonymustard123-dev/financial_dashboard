@@ -141,12 +141,6 @@ function mapRevenue(sourceTab: SourceTab, businessLine: string) {
       revenueSubcategory: "Tokenized Fund Services",
     };
   }
-  if (sourceTab === "L1-P&I-OTHER-DATA") {
-    return {
-      revenueLevel: "L1 Existing P&I-Other" as RevenueLevel,
-      revenueSubcategory: "Traditional Sales Enabled",
-    };
-  }
   if (sourceTab === "Bucket B Revenue Data") {
     return {
       revenueLevel: "Traditional Opportunities Expansion" as RevenueLevel,
@@ -170,10 +164,10 @@ function mapRevenue(sourceTab: SourceTab, businessLine: string) {
 
   return {
     revenueLevel: isTraditional
-      ? ("L1 Existing P&I-Other" as RevenueLevel)
+      ? ("Traditional Opportunities Expansion" as RevenueLevel)
       : ("L1 Direct Digital Revenue" as RevenueLevel),
     revenueSubcategory: isTraditional
-      ? "Traditional Sales Enabled"
+      ? "Traditional Opportunities Expansion"
       : businessLine || "Hard-coded Direct Digital Revenue",
   };
 }

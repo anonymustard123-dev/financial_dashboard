@@ -29,7 +29,6 @@ export function displayRevenueLevel(
 ) {
   const labels: Record<RevenueLevel | "Total Revenue Universe", string> = {
     "L1 Direct Digital Revenue": "Direct Digital Revenue",
-    "L1 Existing P&I-Other": "Existing P&I-Other",
     "Traditional Opportunities Expansion": "Traditional Opportunities Expansion",
     "Digital-Native Client Expansion": "Digital-Native Client Expansion",
     "Total Revenue Universe": "Total Revenue Universe",

@@ -50,10 +50,16 @@ export function KpiCard({ summary, color }: KpiCardProps) {
             opportunities
           </span>
         </div>
-        <div className="mt-4 h-14">
+        <div className="mt-4 h-20">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={microbars}>
-              <XAxis dataKey="quarter" hide />
+            <BarChart data={microbars} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <XAxis
+                dataKey="quarter"
+                axisLine={false}
+                tickLine={false}
+                interval={0}
+                tick={{ fill: "#94a3b8", fontSize: 10 }}
+              />
               <YAxis hide />
               <Tooltip
                 cursor={{ fill: "rgba(255,255,255,0.04)" }}

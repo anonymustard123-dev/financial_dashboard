@@ -16,7 +16,6 @@ export const REVENUE_LEVELS: RevenueLevel[] = [
 
 export const LEVEL_COLORS: Record<RevenueLevel, string> = {
   "L1 Direct Digital Revenue": "#2D9BAD",
-  "L1 Existing P&I-Other": "#6ABDC6",
   "Traditional Opportunities Expansion": "#FFBF00",
   "Digital-Native Client Expansion": "#a78bfa",
 };
@@ -41,9 +40,14 @@ export const DEFAULT_REVENUE_LEVEL_FILTER: RevenueLevelFilter = {
   statuses: [],
 };
 const DIRECT_DIGITAL_DEFAULT_FILTER: RevenueLevelFilter = {
-  years: [],
+  years: [2026],
   minProbability: 30,
   statuses: ["Won", "Open"],
+};
+const EXPANSION_DEFAULT_FILTER: RevenueLevelFilter = {
+  years: [],
+  minProbability: 30,
+  statuses: [],
 };
 
 export const DEFAULT_FILTERS: DashboardFilters = {
@@ -52,7 +56,7 @@ export const DEFAULT_FILTERS: DashboardFilters = {
       level,
       level === "L1 Direct Digital Revenue"
         ? { ...DIRECT_DIGITAL_DEFAULT_FILTER }
-        : { ...DEFAULT_REVENUE_LEVEL_FILTER },
+        : { ...EXPANSION_DEFAULT_FILTER },
     ]),
   ),
   showPipelineMatches: false,

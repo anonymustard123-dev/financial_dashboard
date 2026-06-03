@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { MessageSquareText, Send, X } from "lucide-react";
+import { Download, MessageSquareText, Send, X } from "lucide-react";
 import {
   displayRevenueLevel,
   formatCurrency,
@@ -30,34 +30,83 @@ interface ChatResponse {
   error?: string;
 }
 
-function ChatTableView({ table }: { table: ChatTable }) {
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function downloadExcelTable(table: ChatTable, fileName: string) {
+  const header = table.columns
+    .map((column) => `<th>${escapeHtml(column)}</th>`)
+    .join("");
+  const rows = table.rows
+    .map(
+      (row) =>
+        `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`,
+    )
+    .join("");
+  const html = `<!doctype html><html><head><meta charset="utf-8" /></head><body><table><thead><tr>${header}</tr></thead><tbody>${rows}</tbody></table></body></html>`;
+  const blob = new Blob([html], { type: "application/vnd.ms-excel" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function ChatTableView({
+  table,
+  exportName,
+}: {
+  table: ChatTable;
+  exportName: string;
+}) {
   return (
-    <div className="mt-3 overflow-x-auto rounded-xl border border-white/10">
-      <table className="min-w-full border-collapse text-left text-xs">
-        <thead className="bg-bny-surface/90 text-[10px] uppercase tracking-[0.14em] text-slate-400">
-          <tr>
-            {table.columns.map((column) => (
-              <th key={column} className="whitespace-nowrap px-3 py-2 font-semibold">
-                {column}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-white/10">
-          {table.rows.map((row, rowIndex) => (
-            <tr key={`row-${rowIndex}`} className="text-slate-200">
-              {row.map((cell, cellIndex) => (
-                <td
-                  key={`${rowIndex}-${cellIndex}`}
-                  className="whitespace-nowrap px-3 py-2 align-top"
+    <div className="mt-3 rounded-xl border border-white/10">
+      <div className="flex justify-end border-b border-white/10 bg-bny-surface/70 px-3 py-2">
+        <button
+          type="button"
+          onClick={() => downloadExcelTable(table, exportName)}
+          className="inline-flex items-center gap-2 rounded-lg border border-bny-primary/35 bg-bny-primary/15 px-3 py-1.5 text-xs font-semibold text-bny-teal transition hover:bg-bny-primary/25 hover:text-white"
+        >
+          <Download className="h-3.5 w-3.5" />
+          Export Excel
+        </button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full border-collapse text-left text-xs">
+          <thead className="bg-bny-surface/90 text-[10px] uppercase tracking-[0.14em] text-slate-400">
+            <tr>
+              {table.columns.map((column, columnIndex) => (
+                <th
+                  key={`${column}-${columnIndex}`}
+                  className="whitespace-nowrap px-3 py-2 font-semibold"
                 >
-                  {cell}
-                </td>
+                  {column}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {table.rows.map((row, rowIndex) => (
+              <tr key={`row-${rowIndex}`} className="text-slate-200">
+                {row.map((cell, cellIndex) => (
+                  <td
+                    key={`${rowIndex}-${cellIndex}`}
+                    className="whitespace-nowrap px-3 py-2 align-top"
+                  >
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -205,7 +254,12 @@ export function DataChatPanel({
             }`}
           >
             <p className="whitespace-pre-line">{message.content}</p>
-            {message.table && <ChatTableView table={message.table} />}
+            {message.table && (
+              <ChatTableView
+                table={message.table}
+                exportName={`ai-revenue-copilot-table-${index + 1}.xls`}
+              />
+            )}
           </div>
         ))}
         {isThinking && (

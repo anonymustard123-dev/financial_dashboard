@@ -46,11 +46,6 @@ const levels: Array<{
     ],
   },
   {
-    sourceTab: "L1-P&I-OTHER-DATA",
-    revenueLevel: "L1 Existing P&I-Other",
-    subcategories: ["Traditional Sales Enabled"],
-  },
-  {
     sourceTab: "Bucket B Revenue Data",
     revenueLevel: "Traditional Opportunities Expansion",
     subcategories: ["Traditional Opportunities Expansion"],
@@ -107,11 +102,8 @@ export function createSyntheticData() {
           .slice(0, 10),
         year: 2026,
         quarter,
-        included:
-          level.revenueLevel !== "Digital-Native Client Expansion" ||
-          index % 4 !== 0,
-        pipelineTrackerMatch:
-          level.revenueLevel !== "L1 Direct Digital Revenue" && index % 9 === 0,
+        included: true,
+        pipelineTrackerMatch: false,
       });
     }
   });
