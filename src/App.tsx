@@ -98,8 +98,8 @@ function getDashboardOpportunity(row: NormalizedOpportunity): NormalizedOpportun
   if (row.sourceTab !== "L1-P&I-OTHER-DATA") return row;
   return {
     ...row,
-    revenueLevel: "L2 Digitally Enabled Revenue",
-    revenueSubcategory: "Digitally Enabled Revenue",
+    revenueLevel: "Traditional Opportunities Expansion",
+    revenueSubcategory: "Traditional Opportunities Expansion",
   };
 }
 

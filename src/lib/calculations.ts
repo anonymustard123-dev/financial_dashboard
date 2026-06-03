@@ -10,15 +10,15 @@ import type {
 
 export const REVENUE_LEVELS: RevenueLevel[] = [
   "L1 Direct Digital Revenue",
-  "L2 Digitally Enabled Revenue",
-  "L3 Halo Effect Revenue",
+  "Traditional Opportunities Expansion",
+  "Digital-Native Client Expansion",
 ];
 
 export const LEVEL_COLORS: Record<RevenueLevel, string> = {
   "L1 Direct Digital Revenue": "#2D9BAD",
   "L1 Existing P&I-Other": "#6ABDC6",
-  "L2 Digitally Enabled Revenue": "#FFBF00",
-  "L3 Halo Effect Revenue": "#a78bfa",
+  "Traditional Opportunities Expansion": "#FFBF00",
+  "Digital-Native Client Expansion": "#a78bfa",
 };
 
 export const BUSINESS_LINE_ORDER = [
@@ -102,8 +102,8 @@ export function applyFilters(
     if (
       !filters.showPipelineMatches &&
       (opportunity.pipelineTrackerMatch ||
-        ((opportunity.revenueLevel === "L2 Digitally Enabled Revenue" ||
-          opportunity.revenueLevel === "L3 Halo Effect Revenue") &&
+        ((opportunity.revenueLevel === "Traditional Opportunities Expansion" ||
+          opportunity.revenueLevel === "Digital-Native Client Expansion") &&
           !opportunity.included))
     ) {
       return false;

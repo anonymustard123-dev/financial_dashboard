@@ -1,8 +1,8 @@
 export type RevenueLevel =
   | "L1 Direct Digital Revenue"
   | "L1 Existing P&I-Other"
-  | "L2 Digitally Enabled Revenue"
-  | "L3 Halo Effect Revenue";
+  | "Traditional Opportunities Expansion"
+  | "Digital-Native Client Expansion";
 
 export type SourceTab =
   | "L1-DAC-DATA"
@@ -10,8 +10,8 @@ export type SourceTab =
   | "L1-TADA-DATA"
   | "L1-P&I-OTHER-DATA"
   | "L1-HARD-CODED-DATA"
-  | "L2-DATA"
-  | "L3-DATA";
+  | "Bucket B Revenue Data"
+  | "Bucket C Revenue Data";
 
 export type LoadStatus = "missing" | "loaded" | "warning";
 
@@ -23,6 +23,7 @@ export interface SourceSchema {
   expectedRows: number;
   expectedColumns: number;
   requiredColumns: string[];
+  allowExtraColumns?: boolean;
 }
 
 export interface SourceLoadState {

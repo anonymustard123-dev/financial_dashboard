@@ -14,6 +14,18 @@ const L1_ECRM_COLUMNS = [
   "Close Date",
 ];
 
+const BUCKET_REVENUE_COLUMNS = [
+  "Oppty ID",
+  "Platform/Business Line",
+  "Client",
+  "Client Group",
+  "Opportunity Name",
+  "Status",
+  "Probability",
+  "Total Bid Value (Excluding NII)",
+  "Close Date",
+];
+
 export const SOURCE_SCHEMAS: SourceSchema[] = [
   {
     sourceTab: "L1-DAC-DATA",
@@ -59,18 +71,20 @@ export const SOURCE_SCHEMAS: SourceSchema[] = [
     ],
   },
   {
-    sourceTab: "L2-DATA",
-    displayName: "L2 Digitally Enabled",
+    sourceTab: "Bucket B Revenue Data",
+    displayName: "Bucket B Revenue Data",
     expectedRows: 100,
-    expectedColumns: 11,
-    requiredColumns: L1_ECRM_COLUMNS,
+    expectedColumns: 9,
+    requiredColumns: BUCKET_REVENUE_COLUMNS,
+    allowExtraColumns: true,
   },
   {
-    sourceTab: "L3-DATA",
-    displayName: "L3 Halo Effect",
+    sourceTab: "Bucket C Revenue Data",
+    displayName: "Bucket C Revenue Data",
     expectedRows: 8,
-    expectedColumns: 11,
-    requiredColumns: L1_ECRM_COLUMNS,
+    expectedColumns: 9,
+    requiredColumns: BUCKET_REVENUE_COLUMNS,
+    allowExtraColumns: true,
   },
 ];
 
@@ -119,20 +133,24 @@ export function detectSourceTab(fileName: string): SourceTab | undefined {
     return "L1-P&I-OTHER-DATA";
   }
   if (
+    normalized === "bucket-b-revenue-data" ||
+    normalized.includes("bucket-b-revenue-data") ||
     normalized === "l2-data" ||
     normalized.includes("l2-data") ||
     normalized.startsWith("l2-rev") ||
     normalized.includes("-l2-rev")
   ) {
-    return "L2-DATA";
+    return "Bucket B Revenue Data";
   }
   if (
+    normalized === "bucket-c-revenue-data" ||
+    normalized.includes("bucket-c-revenue-data") ||
     normalized === "l3-data" ||
     normalized.includes("l3-data") ||
     normalized.startsWith("l3-rev") ||
     normalized.includes("-l3-rev")
   ) {
-    return "L3-DATA";
+    return "Bucket C Revenue Data";
   }
 
   return undefined;

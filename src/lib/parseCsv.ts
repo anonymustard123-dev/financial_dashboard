@@ -24,7 +24,9 @@ export function parseRevenueCsv(file: File, schema: SourceSchema) {
           (error) => `Row ${error.row ?? "unknown"}: ${error.message}`,
         );
         const shapeWarning =
-          headers.length && headers.length !== schema.expectedColumns
+          headers.length &&
+          headers.length !== schema.expectedColumns &&
+          !schema.allowExtraColumns
             ? [
                 `Expected ${schema.expectedColumns} columns for ${schema.sourceTab}; found ${headers.length}. Extra columns are ignored.`,
               ]

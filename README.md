@@ -78,9 +78,8 @@ Uses the same 11 required columns as `L1-DAC-DATA.csv`.
 - `Total Bid Value`
 - `Notes`
 
-### L2-DATA.csv
+### Bucket B Revenue Data.csv
 
-- `Source`
 - `Oppty ID`
 - `Platform/Business Line`
 - `Client`
@@ -90,13 +89,10 @@ Uses the same 11 required columns as `L1-DAC-DATA.csv`.
 - `Probability`
 - `Total Bid Value (Excluding NII)`
 - `Close Date`
-- `Close Date (Date)`
-- `Pipeline Tracker Match?`
-- `Included?`
 
-### L3-DATA.csv
+### Bucket C Revenue Data.csv
 
-Uses the same 13 required columns as `L2-DATA.csv`.
+Uses the same 9 required columns as `Bucket B Revenue Data.csv`.
 
 ## Data Handling Guarantees
 

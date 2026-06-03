@@ -51,14 +51,14 @@ const levels: Array<{
     subcategories: ["Traditional Sales Enabled"],
   },
   {
-    sourceTab: "L2-DATA",
-    revenueLevel: "L2 Digitally Enabled Revenue",
-    subcategories: ["Digitally Enabled Revenue"],
+    sourceTab: "Bucket B Revenue Data",
+    revenueLevel: "Traditional Opportunities Expansion",
+    subcategories: ["Traditional Opportunities Expansion"],
   },
   {
-    sourceTab: "L3-DATA",
-    revenueLevel: "L3 Halo Effect Revenue",
-    subcategories: ["Halo Effect Revenue"],
+    sourceTab: "Bucket C Revenue Data",
+    revenueLevel: "Digital-Native Client Expansion",
+    subcategories: ["Digital-Native Client Expansion"],
   },
 ];
 
@@ -68,7 +68,7 @@ export function createSyntheticData() {
   const rows: NormalizedOpportunity[] = [];
 
   levels.forEach((level, levelIndex) => {
-    const count = level.revenueLevel === "L3 Halo Effect Revenue" ? 8 : 18;
+    const count = level.revenueLevel === "Digital-Native Client Expansion" ? 8 : 18;
     for (let index = 0; index < count; index += 1) {
       const client = fakeClients[(index + levelIndex * 2) % fakeClients.length];
       const businessLine =
@@ -107,7 +107,9 @@ export function createSyntheticData() {
           .slice(0, 10),
         year: 2026,
         quarter,
-        included: level.revenueLevel !== "L3 Halo Effect Revenue" || index % 4 !== 0,
+        included:
+          level.revenueLevel !== "Digital-Native Client Expansion" ||
+          index % 4 !== 0,
         pipelineTrackerMatch:
           level.revenueLevel !== "L1 Direct Digital Revenue" && index % 9 === 0,
       });

@@ -8,6 +8,10 @@ import type {
 } from "../types/revenue";
 
 const QUARTERS = ["Q1", "Q2", "Q3", "Q4"] as const;
+const BUCKET_REVENUE_SOURCE_TABS: SourceTab[] = [
+  "Bucket B Revenue Data",
+  "Bucket C Revenue Data",
+];
 
 function getValue(row: RawCsvRow, ...headers: string[]) {
   const entries = Object.entries(row);
@@ -114,6 +118,10 @@ function normalizeBusinessLine(value: string) {
   return businessLine || "Other";
 }
 
+function isBucketRevenueSource(sourceTab: SourceTab) {
+  return BUCKET_REVENUE_SOURCE_TABS.includes(sourceTab);
+}
+
 function mapRevenue(sourceTab: SourceTab, businessLine: string) {
   if (sourceTab === "L1-DAC-DATA") {
     return {
@@ -139,16 +147,16 @@ function mapRevenue(sourceTab: SourceTab, businessLine: string) {
       revenueSubcategory: "Traditional Sales Enabled",
     };
   }
-  if (sourceTab === "L2-DATA") {
+  if (sourceTab === "Bucket B Revenue Data") {
     return {
-      revenueLevel: "L2 Digitally Enabled Revenue" as RevenueLevel,
-      revenueSubcategory: "Digitally Enabled Revenue",
+      revenueLevel: "Traditional Opportunities Expansion" as RevenueLevel,
+      revenueSubcategory: "Traditional Opportunities Expansion",
     };
   }
-  if (sourceTab === "L3-DATA") {
+  if (sourceTab === "Bucket C Revenue Data") {
     return {
-      revenueLevel: "L3 Halo Effect Revenue" as RevenueLevel,
-      revenueSubcategory: "Halo Effect Revenue",
+      revenueLevel: "Digital-Native Client Expansion" as RevenueLevel,
+      revenueSubcategory: "Digital-Native Client Expansion",
     };
   }
 
@@ -175,8 +183,11 @@ export function normalizeRows(
   rows: RawCsvRow[],
 ): NormalizedOpportunity[] {
   return rows.map((row, index) => {
+    const bucketRevenueSource = isBucketRevenueSource(sourceTab);
     const platformBusinessLine = normalizeBusinessLine(
-      getValue(row, "Platform/Business Line", "Business Line"),
+      bucketRevenueSource
+        ? getValue(row, "Platform/Business Line")
+        : getValue(row, "Platform/Business Line", "Business Line"),
     );
     const { revenueLevel, revenueSubcategory } = mapRevenue(
       sourceTab,
@@ -185,10 +196,14 @@ export function normalizeRows(
     const status = getValue(row, "Status") || "Other";
     const probability = parseProbability(getValue(row, "Probability"));
     const bidValue = parseNumber(
-      getValue(row, "Total Bid Value (Excluding NII)", "Total Bid Value"),
+      bucketRevenueSource
+        ? getValue(row, "Total Bid Value (Excluding NII)")
+        : getValue(row, "Total Bid Value (Excluding NII)", "Total Bid Value"),
     );
     const date = parseDateValue(
-      getValue(row, "Close Date (Date)", "Close Date", "Date Closed"),
+      bucketRevenueSource
+        ? getValue(row, "Close Date")
+        : getValue(row, "Close Date (Date)", "Close Date", "Date Closed"),
     );
     const client = getValue(row, "Client") || "Unassigned Client";
     const clientGroup = getValue(row, "Client Group") || client;
@@ -212,10 +227,14 @@ export function normalizeRows(
       closeDate: date ? date.toISOString().slice(0, 10) : "",
       year: date?.getFullYear(),
       quarter: date ? getQuarter(date) : undefined,
-      included: getValue(row, "Included?")
-        ? parseFlag(getValue(row, "Included?"))
-        : true,
-      pipelineTrackerMatch: parseFlag(getValue(row, "Pipeline Tracker Match?")),
+      included: bucketRevenueSource
+        ? true
+        : getValue(row, "Included?")
+          ? parseFlag(getValue(row, "Included?"))
+          : true,
+      pipelineTrackerMatch: bucketRevenueSource
+        ? false
+        : parseFlag(getValue(row, "Pipeline Tracker Match?")),
     };
   });
 }
